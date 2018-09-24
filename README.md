@@ -6,7 +6,8 @@ Mesh processing libraries that support several of our projects such as
 * [SMPL: A Skinned Multi-Person Linear Model](http://smpl.is.tue.mpg.de/)
 
 ## Prerequisites
-Install `boost`
+Install `boost`.
+
 On Linux:
 ```bash
 apt-get install libboost-all-dev
