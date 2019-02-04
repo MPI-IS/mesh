@@ -187,8 +187,7 @@ visibility_compute(PyObject *self, PyObject *args, PyObject *keywds)
                           pSensors, min_dist, visibility, normal_dot_cam);
 
         if(py_tree == NULL){
-            PyObject* py_bin_visibility = PyCObject_FromVoidPtr((void*)search, visibility_destructor);
-            PyObject* py_normal_dot_cam = PyCObject_FromVoidPtr((void*)search, visibility_destructor);
+            delete search;
         }
 
         return Py_BuildValue("NN",py_bin_visibility, py_normal_dot_cam);
