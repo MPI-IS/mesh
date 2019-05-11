@@ -5,7 +5,7 @@
 # See file LICENSE.txt for full license details.
 
 import numpy as np
-import colors
+from . import colors
 
 
 class Lines(object):

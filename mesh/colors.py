@@ -28,7 +28,7 @@ def main():
                 g = int(reg.group(2)) / 255.
                 b = int(reg.group(3)) / 255.
                 d = reg.group(4)
-                print "'%s': np.array([%.2f, %.2f, %.2f])," % (d, r, g, b)
+                print("'%s': np.array([%.2f, %.2f, %.2f])," % (d, r, g, b))
             line = fp.readline()
 
 

@@ -39,17 +39,26 @@ static PyMethodDef loadobj_methods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-initloadobj(void)
+static struct PyModuleDef moduleDef =
 {
-    PyObject *m = Py_InitModule("loadobj", loadobj_methods);
+    PyModuleDef_HEAD_INIT,
+    "serialization.loadobj", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    loadobj_methods
+};
+
+PyMODINIT_FUNC PyInit_loadobj(void) {
+    PyObject *m = PyModule_Create(&moduleDef);
     if (m == NULL)
-        return;
+        return NULL;
 
     import_array();
     LoadObjError = PyErr_NewException(const_cast<char*>("loadobj.LoadObjError"), NULL, NULL);
     Py_INCREF(LoadObjError);
     PyModule_AddObject(m, "LoadObjError", LoadObjError);
+
+    return m;
 }
 
 static PyObject *

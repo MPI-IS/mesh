@@ -14,7 +14,6 @@ import numpy as np
 
 from ..errors import SerializationError
 
-
 """
 serialization.py
 
@@ -25,6 +24,7 @@ __all__ = ['load_from_obj', 'load_from_obj_cpp', 'write_obj', 'write_mtl',
            'write_json', 'write_three_json',
            'set_landmark_indices_from_ppfile', 'set_landmark_indices_from_lmrkfile',
            'load_from_ply', 'load_from_file']
+
 
 # import os.path
 
@@ -74,7 +74,7 @@ def load_from_obj(self, filename):
                     currLandm = line[1]
                 elif line[0] == 'mtllib':
                     self.materials_filepath = os.path.join(os.path.dirname(filename), line[1])
-                    self.materials_file = file(self.materials_filepath, 'r').readlines()
+                    self.materials_file = open(self.materials_filepath, 'r').readlines()
 
     self.v = np.array(v)
     self.f = np.array(f) - 1
@@ -149,7 +149,8 @@ def write_obj(self, filename, flip_faces=False, group=False, comments=None):
             if not hasattr(self, 'fn'):
                 self.reset_face_normals()
             normal_indices = self.fn[face_index][::ff] + 1
-            obj_file.write('f %d/%d/%d %d/%d/%d  %d/%d/%d\n' % tuple(np.array([vertex_indices, texture_indices, normal_indices]).T.flatten()))
+            obj_file.write('f %d/%d/%d %d/%d/%d  %d/%d/%d\n' % tuple(
+                np.array([vertex_indices, texture_indices, normal_indices]).T.flatten()))
         elif hasattr(self, 'fn'):
             normal_indices = self.fn[face_index][::ff] + 1
             obj_file.write('f %d//%d %d//%d  %d//%d\n' % tuple(np.array([vertex_indices, normal_indices]).T.flatten()))
@@ -272,7 +273,9 @@ def write_three_json(self, filename, name=""):
     mesh_data["vertices"] = self.v.flatten().tolist()
     mesh_data["normals"] = self.vn.flatten().tolist()
     mesh_data["uvs"] = [np.array([[vt[0], vt[1]] for vt in self.vt]).flatten().tolist()]
-    mesh_data["faces"] = np.array([[42, self.f[i][0], self.f[i][1], self.f[i][2], 0, self.ft[i][0], self.ft[i][1], self.ft[i][2], self.fn[i][0], self.fn[i][1], self.fn[i][2]] for i in range(len(self.f))]).flatten().tolist()
+    mesh_data["faces"] = np.array([[42, self.f[i][0], self.f[i][1], self.f[i][2], 0, self.ft[i][0], self.ft[i][1],
+                                    self.ft[i][2], self.fn[i][0], self.fn[i][1], self.fn[i][2]] for i in
+                                   range(len(self.f))]).flatten().tolist()
 
     json_or_js_file = open(filename, 'w')
     json_or_js_file.write(json.dumps(mesh_data, indent=4))
@@ -422,13 +425,19 @@ def load_from_file(self, filename, use_cpp=True):
 
 
 def load_from_ply(self, filename):
-    import plyutils
+    from os.path import abspath, dirname, join
+
+    test_data_folder = abspath(join(dirname(__file__), '..', 'data', 'unittest'))
+
+    from psbody.mesh.serialization import plyutils
     try:
         res = plyutils.read(filename)
-    except plyutils.error, e:
-        raise SerializationError(e.message)
+    except plyutils.error as e:
+        raise SerializationError(e)
+
     self.v = np.array(res['pts']).T.copy()
     self.f = np.array(res['tri']).T.copy()
+
     if 'color' in res:
         self.set_vertex_colors(np.array(res['color']).T.copy() / 255)
     if 'normals' in res:
