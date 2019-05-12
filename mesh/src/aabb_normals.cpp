@@ -116,7 +116,7 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOO", &py_tree, &py_v, &py_n))
         return NULL;
 
-    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, "");
+    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
     npy_intp* v_dims = PyArray_DIMS(py_v);
     npy_intp* n_dims = PyArray_DIMS(py_n);
