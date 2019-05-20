@@ -4,6 +4,8 @@ Mesh processing libraries that support several of our projects such as
 * [FLAME: Learning a model of facial shape and expression from 4D scans](http://flame.is.tue.mpg.de/)
 * [MANO: Modeling and Capturing Hands and Bodies Together](http://mano.is.tue.mpg.de/)
 * [SMPL: A Skinned Multi-Person Linear Model](http://smpl.is.tue.mpg.de/)
+* [VOCA: Voice Operated Character Animation](https://github.com/TimoBolkart/voca)
+* [RingNet: 3D Face Shape and Expression Reconstruction from an Image](https://github.com/soubhiksanyal/RingNet)
 
 ## Prerequisites
 Install `boost`.
