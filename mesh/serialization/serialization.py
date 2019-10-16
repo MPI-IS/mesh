@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2013 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2013-02-20.
-
 
 import re
 import os
@@ -24,7 +21,6 @@ __all__ = ['load_from_obj', 'load_from_obj_cpp', 'write_obj', 'write_mtl',
            'write_json', 'write_three_json',
            'set_landmark_indices_from_ppfile', 'set_landmark_indices_from_lmrkfile',
            'load_from_ply', 'load_from_file']
-
 
 # import os.path
 
@@ -159,7 +155,7 @@ def write_obj(self, filename, flip_faces=False, group=False, comments=None):
 
     with open(filename, 'w') as fi:
         if comments is not None:
-            if isinstance(comments, basestring):
+            if isinstance(comments, str):
                 comments = [comments]
             for comment in comments:
                 for line in comment.split("\n"):
@@ -215,14 +211,14 @@ def write_mtl(self, path, material_name, texture_name):
 
 
 def write_ply(self, filename, flip_faces=False, ascii=False, little_endian=True, comments=[]):
-    import plyutils
+    from psbody.mesh.serialization import plyutils
 
     if os.path.dirname(filename) and not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
 
     ff = -1 if flip_faces else 1
 
-    if isinstance(comments, basestring):
+    if isinstance(comments, str):
         comments = [comments]
     comments = filter(lambda c: len(c) > 0, sum(map(lambda c: c.split("\n"), comments), []))
 
@@ -279,6 +275,7 @@ def write_three_json(self, filename, name=""):
 
     json_or_js_file = open(filename, 'w')
     json_or_js_file.write(json.dumps(mesh_data, indent=4))
+    json_or_js_file.close()
 
 
 def write_json(self, filename, header="", footer="", name="", include_faces=True, texture_mode=True):
@@ -326,6 +323,7 @@ def write_json(self, filename, header="", footer="", name="", include_faces=True
         json_or_js_file.write(footer)
     else:
         json_or_js_file.write(json.dumps(mesh_data, indent=4))
+    json_or_js_file.close()
 
 
 def set_landmark_indices_from_ppfile(self, ppfilename):
@@ -343,23 +341,24 @@ def set_landmark_indices_from_ppfile(self, ppfilename):
 
 
 def set_landmark_indices_from_lmrkfile(self, lmrkfilename):
-    lmrkfile = open(lmrkfilename, 'rb')
-    self.landm_raw_xyz = {}
-    for line in lmrkfile.readlines():
-        if not line.strip():
-            continue
-        command = line.split()[0]
-        data = map(lambda x: float(x), line.split()[1:])
+    with open(lmrkfilename, 'r') as lmrkfile:
+        self.landm_raw_xyz = {}
 
-        if command == '_scale':
-            selfscale_factor = np.matrix(data)
-        elif command == '_translate':
-            self.caesar_translation_vector = np.matrix(data)
-        elif command == '_rotation':
-            self.caesar_rotation_matrix = np.matrix(data).reshape(3, 3)
-        else:
-            self.landm_raw_xyz[command] = [data[1], data[2], data[0]]
-    self.recompute_landmark_indices(lmrkfilename)
+        for line in lmrkfile.readlines():
+            if not line.strip():
+                continue
+            command = line.split()[0]
+            data = [float(x) for x in line.split()[1:]]
+
+            if command == '_scale':
+                selfscale_factor = np.matrix(data)
+            elif command == '_translate':
+                self.caesar_translation_vector = np.matrix(data)
+            elif command == '_rotation':
+                self.caesar_rotation_matrix = np.matrix(data).reshape(3, 3)
+            else:
+                self.landm_raw_xyz[command] = [data[1], data[2], data[0]]
+        self.recompute_landmark_indices(lmrkfilename)
 
 
 def _is_lmrkfile(filename):
@@ -390,12 +389,12 @@ def set_landmark_indices_from_any(self, landmarks):
         if re.search(".ya{0,1}ml$", landmarks):
             import yaml
             with open(landmarks) as f:
-                self.set_landmarks_from_raw(yaml.load(f))
+                self.set_landmarks_from_raw(yaml.load(f, Loader=yaml.FullLoader))
         elif re.search(".json$", landmarks):
             with open(landmarks) as f:
                 self.set_landmarks_from_raw(json.load(f))
         elif re.search(".pkl$", landmarks):
-            with open(landmarks) as f:
+            with open(landmarks, "rb") as f:
                 self.set_landmarks_from_raw(pickle.load(f))
         elif _is_lmrkfile(landmarks):
             self.set_landmark_indices_from_lmrkfile(landmarks)

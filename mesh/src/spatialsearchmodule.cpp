@@ -1,6 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
 
 // needed to avoid the link to debug "_d.lib" libraries
 #include "hijack_python_headers.hpp"
@@ -26,6 +23,9 @@ static PyObject* spatialsearch_aabbtree_compute(PyObject *self, PyObject *args);
 static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args);
 
 static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args);
+
+static PyObject *
+spatialsearch_aabbtree_intersections_indices(PyObject *self, PyObject *args, PyObject *keywds);
 
 static PyObject *Mesh_IntersectionsError;
 
@@ -310,4 +310,98 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
         }
     }
     return Py_BuildValue("NNN", result1, result2, result3);
+}
+
+
+static PyObject * spatialsearch_aabbtree_intersections_indices(PyObject *self, PyObject *args, PyObject *keywds) {
+    try {
+        PyObject *py_tree=NULL;
+        PyArrayObject *py_qv=NULL, *py_qf=NULL;
+
+        // a copy of the literal string is done into a (non const) char
+        char key1[] = "tree";
+        char key2[] = "qv";
+        char key3[] = "qf";
+        static char* kwlist[] = {key1, key2, key3, NULL};
+
+        if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!", kwlist,
+                                         &py_tree,
+                                         &PyArray_Type, &py_qv,
+                                         &PyArray_Type, &py_qf)) {
+            return NULL;
+        }
+
+        TreeAndTri *search = (TreeAndTri *)PyCapsule_GetPointer(py_tree, NULL);
+
+        if (py_qv->descr->type_num != NPY_DOUBLE || py_qv->nd != 2) {
+            PyErr_SetString(PyExc_ValueError, "Query Vertices must be of type double, and 2 dimensional");
+            return NULL;
+        }
+
+        if (py_qf->descr->type_num != NPY_UINT32 || py_qf->nd != 2) {
+            PyErr_SetString(PyExc_ValueError, "Query Faces must be of type uint32, and 2 dimensional");
+            return NULL;
+        }
+
+        // QUERY MESH STRUCTURE
+        npy_intp* qv_dims = PyArray_DIMS(py_qv);
+        npy_intp* qf_dims = PyArray_DIMS(py_qf);
+
+        if (qv_dims[1] != 3 || qf_dims[1] != 3) {
+            PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
+            return NULL;
+        }
+
+        double *pQV = (double*)PyArray_DATA(py_qv);
+        uint32_t *pQF = (uint32_t*)PyArray_DATA(py_qf);
+
+        size_t q_n_verts = qv_dims[0];
+        size_t q_n_faces = qf_dims[0];
+
+        // BUILD STRUCTURE FOR QUERY MESH
+        const array<uint32_t, 3>* q_faces_arr=reinterpret_cast<const array<uint32_t,3>*>(pQF);
+        const array<double, 3>* q_verts_arr=reinterpret_cast<const array<double,3>*>(pQV);
+
+        std::vector<K::Point_3> q_verts_v;
+        q_verts_v.reserve(q_n_verts);
+        for(size_t pp=0; pp<q_n_verts; ++pp){
+            q_verts_v.push_back(K::Point_3(q_verts_arr[pp][0],
+                                           q_verts_arr[pp][1],
+                                           q_verts_arr[pp][2]));
+        }
+
+        vector<K::Triangle_3> q_faces_v;
+        q_faces_v.reserve(q_n_faces);
+        for(size_t tt=0; tt<q_n_faces; ++tt) {
+            q_faces_v.push_back(K::Triangle_3(q_verts_v[q_faces_arr[tt][0]],
+                                              q_verts_v[q_faces_arr[tt][1]],
+                                              q_verts_v[q_faces_arr[tt][2]]));
+        }
+
+        // USE TREE TO QUERY FACES
+        std::vector<uint32_t> mesh_intersections;
+        #pragma omp parallel for
+        for(size_t tt=0; tt<q_n_faces; ++tt){
+            // counts #intersections with a triangle query
+            K::Triangle_3 triangle_query(q_verts_v[q_faces_arr[tt][0]],
+                                         q_verts_v[q_faces_arr[tt][1]],
+                                         q_verts_v[q_faces_arr[tt][2]]);
+
+            if (search->tree.do_intersect(triangle_query)) {
+                mesh_intersections.push_back(tt);
+            }
+        }
+
+        // GET RESULT BACK
+        npy_intp result_dims[] = {mesh_intersections.size()};
+        PyObject *result = PyArray_SimpleNew(1, result_dims, NPY_UINT32);
+
+        uint32_t* mesh_intersections_arr = reinterpret_cast<uint32_t*>(PyArray_DATA(result));
+        std::copy(mesh_intersections.begin(), mesh_intersections.end(),mesh_intersections_arr);
+
+        return Py_BuildValue("N",result);
+    } catch (Mesh_IntersectionsException& e) {
+        PyErr_SetString(Mesh_IntersectionsError, e.what());
+        return NULL;
+    }
 }

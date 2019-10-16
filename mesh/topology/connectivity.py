@@ -7,7 +7,7 @@
 import os
 import zlib
 import numpy as np
-import cPickle as pickle
+import pickle
 import scipy.sparse as sp
 
 from ..utils import row, col

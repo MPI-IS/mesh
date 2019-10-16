@@ -1,0 +1,9 @@
+build/*
+*.pyc
+temporary_test
+dist
+MANIFEST
+*.xml
+*.egg-info
+doc/build
+.eggs

@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
-
 // A variant of CGAL/internal/AABB_tree/nearest_point_triangle_3.h
 // it differs in that it records which part of the triangle (interior, edge, or vertex)
 // the query point is closest to
@@ -18,7 +14,7 @@ namespace iev {
 // tests whether a query point q (assumed to be in the plane of the triangle)
 // is inside or outside a triangle edge (p1,p2)
 // returns true iff q is outside
-// q is inside (p1,p2) if:
+// q is inside (p1,p2) if: 
 //  q is on the correct side of the line through (p1,p2)
 //  q's projection on this line lies between p1 and p2
 // if q is outside the edge (and therefore the triangle) but projects between p1 and p2
@@ -27,7 +23,7 @@ template <class K>
 inline
 bool
 is_inside_triangle_3_aux(const typename K::Vector_3& w, // scaled triangle normal (b-a) x (c-b)
-                         const typename K::Point_3& p1,
+                         const typename K::Point_3& p1, 
                          const typename K::Point_3& p2,
                          const typename K::Point_3& q, // query point
                          typename K::Point_3& result,

@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
-
 #ifndef __NEAREST_TRIANGLE_HPP__
 #define __NEAREST_TRIANGLE_HPP__
 
@@ -43,5 +39,14 @@ template<typename T>
 T* unwrapPointer(uint64_t ptr) {
     return reinterpret_cast<T*>(ptr);
 }
+
+class Mesh_IntersectionsException: public std::exception {
+public:
+    Mesh_IntersectionsException(std::string m="Mesh_IntersectionsException!"):msg(m) {}
+    ~Mesh_IntersectionsException() throw() {}
+    const char* what() const throw() { return msg.c_str(); }
+private:
+    std::string msg;
+};
 
 #endif

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2012 Max Planck Society. All rights reserved.
 
 """
 Mesh module
@@ -372,10 +370,10 @@ class Mesh(object):
 
     @property
     def landm_names(self):
+        names = []
         if hasattr(self, 'landm_regressors') or hasattr(self, 'landm'):
-            return self.landm_regressors.keys() if hasattr(self, 'landm_regressors') else self.landm.keys()
-        else:
-            return []
+            names = self.landm_regressors.keys() if hasattr(self, 'landm_regressors') else self.landm.keys()
+        return list(names)
 
     @property
     def landm_xyz(self, ordering=None):

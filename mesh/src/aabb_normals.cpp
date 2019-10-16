@@ -1,6 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
 
 // needed to avoid the link to debug "_d.lib" libraries
 #include "hijack_python_headers.hpp"
