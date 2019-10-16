@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
-
 #include "plyutils.h"
 
 static PyMethodDef PlyutilsMethods[] = {
@@ -74,7 +70,7 @@ static PyObject * plyutils_read(PyObject *self, PyObject *args)
     PyObject *x, *y, *z, *r, *g, *b;
     PyObject *nx, *ny, *nz;
     PyObject *tri;
-
+    
     if (!PyArg_ParseTuple(args, "s", &filename)) {
         PyErr_SetString(PlyutilsError, "plyutils.read doesn't know what to do without a filename.");
         return NULL;
@@ -130,7 +126,7 @@ static PyObject * plyutils_read(PyObject *self, PyObject *args)
          return NULL;
     }
     ply_close(ply);
-
+    
     if (use_color && !use_normals)
         return Py_BuildValue("{s:[N,N,N],s:N,s:[N,N,N]}", "pts", x, y, z, "tri", tri, "color", r, g, b);
     if (!use_color && use_normals)
@@ -159,7 +155,7 @@ static PyObject * plyutils_write(PyObject *self, PyObject *args)
     use_normals = 0;
     if (normals!=NULL)
         use_normals = (PyList_Size(pts) == PyList_Size(normals));
-
+    
     if (ascii == Py_True)
         ply = ply_create(filename, PLY_ASCII, error_cb);
     else {
@@ -168,19 +164,19 @@ static PyObject * plyutils_write(PyObject *self, PyObject *args)
       else
         ply = ply_create(filename, PLY_BIG_ENDIAN, error_cb);
     }
-
+    
     if (!ply) {
         PyErr_SetString(PlyutilsError, "Failed to create PLY file.");
         return NULL;
     }
-
+    
     res = 1;
-
+    
     for (ii = 0; ii < PyList_Size(comments); ++ii) {
         comment = PyBytes_AsString(PyObject_Str(PyList_GetItem(comments, ii)));
         res &= ply_add_comment(ply, comment);
     }
-
+    
     res &= ply_add_element(ply, "vertex", PyList_Size(pts));
     res &= ply_add_scalar_property(ply, "x", PLY_FLOAT);
     res &= ply_add_scalar_property(ply, "y", PLY_FLOAT);
@@ -208,7 +204,7 @@ static PyObject * plyutils_write(PyObject *self, PyObject *args)
     }
 
 
-
+    
     for (ii = 0; ii < PyList_Size(pts); ++ii) {
         row = PyList_GetItem(pts, ii);
         res &= ply_write(ply, PyFloat_AsDouble(PyList_GetItem(row, 0)));

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2012 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2012-05-11.
 
 """
@@ -46,6 +44,7 @@ from multiprocessing import freeze_support
 import zmq
 import re
 import subprocess
+import tempfile
 
 # this is way too verbose, organize imports better
 from OpenGL.GL import glPixelStorei, glMatrixMode, glHint, glTexParameterf, glDisableClientState
@@ -101,7 +100,7 @@ def _run_self(args, stdin=None, stdout=None, stderr=None):
                             ['-m'] + ['%s.%s' % (__package__, os.path.splitext(os.path.basename(__file__))[0])] +
                             args,
                             stdin=stdin,
-                            stdout=stdout if stdout is not None else subprocess.PIPE,
+                            stdout=stdout,  # if stdout is not None else subprocess.PIPE,
                             stderr=stderr)
 
 
@@ -125,16 +124,30 @@ def test_for_opengl():
     .. note:: the result of the test is cached
 
     """
+
     global test_for_opengl_cached
     if test_for_opengl_cached is None:
-        p = _run_self(["TEST_FOR_OPENGL"], stderr=subprocess.PIPE)
-        p.wait()
-        line = ''.join(str(p.stdout.readlines()))
-        test_for_opengl_cached = 'success' in line
-        if not test_for_opengl_cached:
-            print('OpenGL test failed: ')
-            print('\tstdout:', line)
-            print('\tstderr:', '\n'.join(p.stderr.readlines()))
+
+        with open(os.devnull) as dev_null, \
+            tempfile.TemporaryFile() as out, \
+            tempfile.TemporaryFile() as err:
+
+                p = _run_self(["TEST_FOR_OPENGL"],
+                              stdin=dev_null,
+                              stdout=out,
+                              stderr=err)
+                p.wait()
+
+                out.seek(0)
+                err.seek(0)
+
+                line = ''.join(out.read().decode())
+                test_for_opengl_cached = 'success' in line
+                if not test_for_opengl_cached:
+                    print('OpenGL test failed: ')
+                    print('\tstdout:', line)
+                    print('\tstderr:', '\n'.join(err.read().decode()))
+
     return test_for_opengl_cached
 
 
@@ -322,20 +335,28 @@ class MeshViewerLocal(object):
 
         result.client = zmq.Context.instance().socket(zmq.PUSH)
         result.client.linger = 0
-        result.p = _run_self([titlebar, str(shape[0]), str(shape[1]), str(window_width), str(window_height)])
 
-        line = result.p.stdout.readline()
-        current_port = re.match('<PORT>(.*?)</PORT>', line.decode(sys.stdout.encoding))
-        if not current_port:
-            raise Exception("MeshViewer remote appears to have failed to launch")
-        current_port = int(current_port.group(1))
-        result.client.connect('tcp://127.0.0.1:%d' % (current_port))
+        with open(os.devnull) as dev_null, \
+            tempfile.TemporaryFile() as err:
 
-        if uid:
-            MeshViewerLocal.managed[uid] = result
-        result.shape = shape
-        result.keepalive = keepalive
-        return result
+                result.p = _run_self([titlebar, str(shape[0]), str(shape[1]), str(window_width), str(window_height)],
+                                     stdin=dev_null,
+                                     stdout=subprocess.PIPE,
+                                     stderr=err)
+
+                line = result.p.stdout.readline().decode()
+                result.p.stdout.close()
+                current_port = re.match('<PORT>(.*?)</PORT>', line)
+                if not current_port:
+                    raise Exception("MeshViewer remote appears to have failed to launch")
+                current_port = int(current_port.group(1))
+                result.client.connect('tcp://127.0.0.1:%d' % (current_port))
+
+                if uid:
+                    MeshViewerLocal.managed[uid] = result
+                result.shape = shape
+                result.keepalive = keepalive
+                return result
 
     def get_subwindows(self):
         return [[MeshSubwindow(parent_window=self, which_window=(r, c)) for c in range(self.shape[1])] for r in range(self.shape[0])]
@@ -1203,7 +1224,6 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 2 and sys.argv[1] == 'TEST_FOR_OPENGL':
         _test_for_opengl()
-        sys.exit()
 
     elif len(sys.argv) > 2:
         m = MeshViewerRemote(titlebar=sys.argv[1],
@@ -1216,4 +1236,3 @@ if __name__ == '__main__':
         print("#" * 10)
         print('Usage:')
         print("python -m %s.%s arguments" % (__package__, os.path.splitext(os.path.basename(__file__))[0]))
-        sys.exit(-1)

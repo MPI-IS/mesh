@@ -2,9 +2,7 @@
 # encoding: utf-8
 
 # Created by Matthew Loper on 2013-02-20.
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2013 MPI. All rights reserved.
 
 """
 Searching and lookup of geometric entities
@@ -37,6 +35,18 @@ class AabbTree(object):
                                                                           points.astype(np.float64),
                                                                           normals.astype(np.float64))
         return (distances, f_idxs, v)
+
+    def intersections_indices(self, q_v, q_f):
+        '''
+            Given a set of query vertices and faces, the function computes which intersect the mesh
+            A list with the indices in q_f is returned
+            @param q_v The query vertices (array of 3xN float values)
+            @param q_f The query faces (array 3xF integer values)
+        '''
+        import spatialsearch
+        return spatialsearch.aabbtree_intersections_indices(self.cpp_handle,
+                                                            q_v.astype(np.float64),
+                                                            q_f.astype(np.uint32))
 
 
 class ClosestPointTree(object):
