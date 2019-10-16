@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
-
 #define CGAL_CFG_NO_CPP0X_VARIADIC_TEMPLATES 1
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
@@ -175,3 +171,4 @@ void _internal_compute(const TreeAndTri* search, const double* normals,
     //                       vtask);
     //vtask(tbb::blocked_range<int>(0,n_cams));
 }
+

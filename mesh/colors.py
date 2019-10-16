@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2012 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2012-05-12.
 
 """
@@ -28,7 +26,7 @@ def main():
                 g = int(reg.group(2)) / 255.
                 b = int(reg.group(3)) / 255.
                 d = reg.group(4)
-                print "'%s': np.array([%.2f, %.2f, %.2f])," % (d, r, g, b)
+                print("'%s': np.array([%.2f, %.2f, %.2f])," % (d, r, g, b))
             line = fp.readline()
 
 

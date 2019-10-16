@@ -4,7 +4,6 @@
 # Copyright (c) 2012 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2012-10-28.
 
-
 from ..utils import row
 from .linear_mesh_transform import LinearMeshTransform
 from .connectivity import get_vert_connectivity, get_vertices_per_edge, get_vert_opposites_per_edge
@@ -40,7 +39,7 @@ def loop_subdivider(mesh):
 
     if True:
         # New values for each vertex
-        for idx in xrange(len(mesh.v)):
+        for idx in range(len(mesh.v)):
 
             # find neighboring vertices
             nbrs = np.nonzero(vc[:, idx])[0]

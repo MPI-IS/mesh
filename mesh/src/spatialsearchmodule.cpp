@@ -1,6 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
 
 // needed to avoid the link to debug "_d.lib" libraries
 #include "hijack_python_headers.hpp"
@@ -21,35 +18,37 @@ using namespace tbb;
 
 typedef uint32_t Index;
 
-static PyObject *
-spatialsearch_aabbtree_compute(PyObject *self, PyObject *args);
+static PyObject* spatialsearch_aabbtree_compute(PyObject *self, PyObject *args);
+
+static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args);
+
+static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args);
 
 static PyObject *
-spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args);
-
-static PyObject *
-spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args);
+spatialsearch_aabbtree_intersections_indices(PyObject *self, PyObject *args, PyObject *keywds);
 
 static PyObject *Mesh_IntersectionsError;
 
 static PyMethodDef SpatialsearchMethods[] = {
-    {"aabbtree_compute",  spatialsearch_aabbtree_compute, METH_VARARGS,
-        "aabbtree_compute."},
-    {"aabbtree_nearest",  spatialsearch_aabbtree_nearest, METH_VARARGS,
-        "aabbtree_nearest."},
-    {"aabbtree_nearest_alongnormal",  spatialsearch_aabbtree_nearest_alongnormal, METH_VARARGS,
-        "aabbtree_nearest."},
+    {"aabbtree_compute",  spatialsearch_aabbtree_compute, METH_VARARGS, "aabbtree_compute."},
+    {"aabbtree_nearest",  spatialsearch_aabbtree_nearest, METH_VARARGS, "aabbtree_nearest."},
+    {"aabbtree_nearest_alongnormal",  spatialsearch_aabbtree_nearest_alongnormal, METH_VARARGS, "aabbtree_nearest."},
     {NULL, NULL, 0}        /* Sentinel */
 };
 
+static struct PyModuleDef moduleDef = {
+    PyModuleDef_HEAD_INIT,
+    "spatialsearch", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    SpatialsearchMethods
+};
 
+PyMODINIT_FUNC PyInit_spatialsearch(void) {
 
-PyMODINIT_FUNC
-initspatialsearch(void)
-{
-    PyObject *m = Py_InitModule("spatialsearch", SpatialsearchMethods);
+    PyObject *m = PyModule_Create(&moduleDef);
     if (m == NULL) {
-        return;
+        return NULL;
     }
 
     import_array();
@@ -58,19 +57,21 @@ initspatialsearch(void)
     Mesh_IntersectionsError = PyErr_NewException(const_cast<char*>("spatialsearch.Mesh_IntersectionsError"), NULL, NULL);
     Py_INCREF(Mesh_IntersectionsError);
     PyModule_AddObject(m, "Mesh_IntersectionsError", Mesh_IntersectionsError);
+
+    return m;
 }
 
 
-void aabb_tree_destructor(void *ptr)
+void aabb_tree_destructor(PyObject *ptr)
 {
-    TreeAndTri* search = (TreeAndTri*)ptr;
+    TreeAndTri* search = (TreeAndTri*) PyCapsule_GetPointer(ptr, NULL);
     delete search;
 }
 
 static PyObject *
 spatialsearch_aabbtree_compute(PyObject *self, PyObject *args)
 {
-    PyArrayObject *py_v = NULL, *py_f = NULL;
+    PyArrayObject *py_v = NULL, *py_f = NULL; // numpy memory copy, probably managed by python
 
     if (!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &py_v,&PyArray_Type, &py_f))
         return NULL;
@@ -118,8 +119,8 @@ spatialsearch_aabbtree_compute(PyObject *self, PyObject *args)
     search->tree.rebuild(search->triangles.begin(), search->triangles.end());
     search->tree.accelerate_distance_queries();
 
-    PyObject* result = PyCObject_FromVoidPtr((void*)search, aabb_tree_destructor);
-    return Py_BuildValue("N", result);
+    PyObject* result = PyCapsule_New((void*)search, NULL, aabb_tree_destructor);
+    return result;
 }
 
 void spatialsearch_aabbtree_nearest_one(int ss, TreeAndTri * search, std::vector<K::Point_3> &sample_points,
@@ -144,8 +145,8 @@ class AaBbTreeNearestTbb {
     uint32_t* closest_part;
     array<double,3>* closest_point;
 public:
-    void operator()( const blocked_range<size_t>& r ) const {
-        for( size_t i=r.begin(); i!=r.end(); ++i )
+    void operator()(const blocked_range<size_t>& r) const {
+        for (size_t i=r.begin(); i!=r.end(); ++i)
             spatialsearch_aabbtree_nearest_one(i, search, *sample_points, closest_triangles, closest_part, closest_point);
     }
     AaBbTreeNearestTbb( TreeAndTri * search, std::vector<K::Point_3> *sample_points,
@@ -158,13 +159,12 @@ public:
 
 #endif
 
-static PyObject *
-spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
+static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
 {
     PyObject *py_tree, *py_v;
     if (!PyArg_ParseTuple(args, "OO!", &py_tree, &PyArray_Type, &py_v))
         return NULL;
-    TreeAndTri *search = (TreeAndTri *)PyCObject_AsVoidPtr(py_tree);
+    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
     npy_intp* v_dims = PyArray_DIMS(py_v);
 
@@ -201,25 +201,24 @@ spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
 
 
 #ifdef HAVE_TBB
-    parallel_for(blocked_range<size_t>(0,S), AaBbTreeNearestTbb(search, &sample_points, closest_triangles, closest_part, closest_point));
+    parallel_for(blocked_range<size_t>(0,S), AaBbTreieNearestTbb(search, &sample_points, closest_triangles, closest_part, closest_point));
 #else
 #ifdef HAVE_OPENMP
     #pragma omp parallel for
 #endif
-    for(size_t ss=0; ss<S; ++ss) {
+    for(size_t ss = 0; ss < S; ++ss) {
         spatialsearch_aabbtree_nearest_one(ss, search, sample_points, closest_triangles, closest_part, closest_point);
     }
 #endif
     return Py_BuildValue("NNN", result1, result2, result3);
 }
 
-static PyObject *
-spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
+static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
 {
     PyObject *py_tree, *py_p, *py_n;
     if (!PyArg_ParseTuple(args, "OO!O!", &py_tree, &PyArray_Type, &py_p, &PyArray_Type, &py_n))
         return NULL;
-    TreeAndTri *search = (TreeAndTri *)PyCObject_AsVoidPtr(py_tree);
+    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
     npy_intp* p_dims = PyArray_DIMS(py_p);
     npy_intp* n_dims = PyArray_DIMS(py_p);
@@ -231,8 +230,8 @@ spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
 
     size_t S=p_dims[0];
 
-    array<double, 3>* p_arr=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_p));
-    array<double, 3>* n_arr=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_n));
+    array<double, 3>* p_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA(py_p));
+    array<double, 3>* n_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA(py_n));
 
     #ifdef _OPENMP
     omp_set_num_threads(8);
@@ -242,7 +241,7 @@ spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
     std::vector<K::Vector_3> n_v;
     p_v.reserve(S);
     n_v.reserve(S);
-    for(size_t ss=0; ss<S; ++ss) {
+    for(size_t ss = 0; ss < S; ++ss) {
         p_v.push_back(K::Point_3(p_arr[ss][0], p_arr[ss][1], p_arr[ss][2]));
         n_v.push_back(K::Vector_3(n_arr[ss][0], n_arr[ss][1], n_arr[ss][2]));
     }
@@ -251,10 +250,10 @@ spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
 
     PyObject *result1 = PyArray_SimpleNew(1, result1_dims, NPY_DOUBLE);
 
-    double* distance=reinterpret_cast<double*>(PyArray_DATA(result1));
+    double* distance = reinterpret_cast<double*>(PyArray_DATA(result1));
 
     PyObject *result2 = PyArray_SimpleNew(1, result1_dims, NPY_UINT32);
-    uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
+    uint32_t* closest_triangles = reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
 
     npy_intp result3_dims[] = {S, 3};
     PyObject *result3 = PyArray_SimpleNew(2, result3_dims, NPY_DOUBLE);
@@ -311,4 +310,98 @@ spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyObject *args)
         }
     }
     return Py_BuildValue("NNN", result1, result2, result3);
+}
+
+
+static PyObject * spatialsearch_aabbtree_intersections_indices(PyObject *self, PyObject *args, PyObject *keywds) {
+    try {
+        PyObject *py_tree=NULL;
+        PyArrayObject *py_qv=NULL, *py_qf=NULL;
+
+        // a copy of the literal string is done into a (non const) char
+        char key1[] = "tree";
+        char key2[] = "qv";
+        char key3[] = "qf";
+        static char* kwlist[] = {key1, key2, key3, NULL};
+
+        if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!", kwlist,
+                                         &py_tree,
+                                         &PyArray_Type, &py_qv,
+                                         &PyArray_Type, &py_qf)) {
+            return NULL;
+        }
+
+        TreeAndTri *search = (TreeAndTri *)PyCapsule_GetPointer(py_tree, NULL);
+
+        if (py_qv->descr->type_num != NPY_DOUBLE || py_qv->nd != 2) {
+            PyErr_SetString(PyExc_ValueError, "Query Vertices must be of type double, and 2 dimensional");
+            return NULL;
+        }
+
+        if (py_qf->descr->type_num != NPY_UINT32 || py_qf->nd != 2) {
+            PyErr_SetString(PyExc_ValueError, "Query Faces must be of type uint32, and 2 dimensional");
+            return NULL;
+        }
+
+        // QUERY MESH STRUCTURE
+        npy_intp* qv_dims = PyArray_DIMS(py_qv);
+        npy_intp* qf_dims = PyArray_DIMS(py_qf);
+
+        if (qv_dims[1] != 3 || qf_dims[1] != 3) {
+            PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
+            return NULL;
+        }
+
+        double *pQV = (double*)PyArray_DATA(py_qv);
+        uint32_t *pQF = (uint32_t*)PyArray_DATA(py_qf);
+
+        size_t q_n_verts = qv_dims[0];
+        size_t q_n_faces = qf_dims[0];
+
+        // BUILD STRUCTURE FOR QUERY MESH
+        const array<uint32_t, 3>* q_faces_arr=reinterpret_cast<const array<uint32_t,3>*>(pQF);
+        const array<double, 3>* q_verts_arr=reinterpret_cast<const array<double,3>*>(pQV);
+
+        std::vector<K::Point_3> q_verts_v;
+        q_verts_v.reserve(q_n_verts);
+        for(size_t pp=0; pp<q_n_verts; ++pp){
+            q_verts_v.push_back(K::Point_3(q_verts_arr[pp][0],
+                                           q_verts_arr[pp][1],
+                                           q_verts_arr[pp][2]));
+        }
+
+        vector<K::Triangle_3> q_faces_v;
+        q_faces_v.reserve(q_n_faces);
+        for(size_t tt=0; tt<q_n_faces; ++tt) {
+            q_faces_v.push_back(K::Triangle_3(q_verts_v[q_faces_arr[tt][0]],
+                                              q_verts_v[q_faces_arr[tt][1]],
+                                              q_verts_v[q_faces_arr[tt][2]]));
+        }
+
+        // USE TREE TO QUERY FACES
+        std::vector<uint32_t> mesh_intersections;
+        #pragma omp parallel for
+        for(size_t tt=0; tt<q_n_faces; ++tt){
+            // counts #intersections with a triangle query
+            K::Triangle_3 triangle_query(q_verts_v[q_faces_arr[tt][0]],
+                                         q_verts_v[q_faces_arr[tt][1]],
+                                         q_verts_v[q_faces_arr[tt][2]]);
+
+            if (search->tree.do_intersect(triangle_query)) {
+                mesh_intersections.push_back(tt);
+            }
+        }
+
+        // GET RESULT BACK
+        npy_intp result_dims[] = {mesh_intersections.size()};
+        PyObject *result = PyArray_SimpleNew(1, result_dims, NPY_UINT32);
+
+        uint32_t* mesh_intersections_arr = reinterpret_cast<uint32_t*>(PyArray_DATA(result));
+        std::copy(mesh_intersections.begin(), mesh_intersections.end(),mesh_intersections_arr);
+
+        return Py_BuildValue("N",result);
+    } catch (Mesh_IntersectionsException& e) {
+        PyErr_SetString(Mesh_IntersectionsError, e.what());
+        return NULL;
+    }
 }

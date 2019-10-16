@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2013 Max Planck Society. All rights reserved.
 
 import numpy as np
 import unittest
 import os
 
 from . import test_data_folder, temporary_files_folder
-from psbody.mesh.visibility import visibility_compute
 
 
 class TestVisibility(unittest.TestCase):
 
+    @unittest.skip('Too long - skipping for the moment.')
     def test_qslim_smoke_test(self):
         from psbody.mesh.mesh import Mesh
         from psbody.mesh.topology.decimation import qslim_decimator
@@ -33,6 +31,9 @@ class TestVisibility(unittest.TestCase):
 
 class TestLoopSubdivision(unittest.TestCase):
 
+    @unittest.skipIf(
+        not os.path.isfile(os.path.join(test_data_folder, 'female_template.ply')),
+        'No data file.')
     def test_loop_subdivision_smoke_test(self):
         from psbody.mesh import Mesh
         from psbody.mesh.topology.subdivision import loop_subdivider
@@ -74,6 +75,9 @@ class TestLoopSubdivision(unittest.TestCase):
 
 class TestConnectivity(unittest.TestCase):
 
+    @unittest.skipIf(
+        not os.path.isfile(os.path.join(test_data_folder, 'female_template.ply')),
+        'No data file.')
     def test_connectivity_smoke_test(self):
 
         from psbody.mesh import Mesh

@@ -1,15 +1,11 @@
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
 
 import unittest
 import copy
 import numpy as np
 
-
 from psbody.mesh.arcball import Matrix3fT, Matrix4fT, ArcBallT, \
     Point2fT, Matrix3fSetRotationFromQuat4f, Matrix3fMulMatrix3f, Matrix4fSetRotationFromMatrix3f
-from numpy import dtype, double
+from numpy import double
 
 
 class TestArcball(unittest.TestCase):

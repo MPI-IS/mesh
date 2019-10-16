@@ -1,6 +1,3 @@
-// Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-// This file is part of psbody.mesh project which is released under MPI License.
-// See file LICENSE.txt for full license details.
 
 // needed to avoid the link to debug "_d.lib" libraries
 #include "hijack_python_headers.hpp"
@@ -39,17 +36,26 @@ static PyMethodDef loadobj_methods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-initloadobj(void)
+static struct PyModuleDef moduleDef =
 {
-    PyObject *m = Py_InitModule("loadobj", loadobj_methods);
+    PyModuleDef_HEAD_INIT,
+    "serialization.loadobj", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    loadobj_methods
+};
+
+PyMODINIT_FUNC PyInit_loadobj(void) {
+    PyObject *m = PyModule_Create(&moduleDef);
     if (m == NULL)
-        return;
+        return NULL;
 
     import_array();
     LoadObjError = PyErr_NewException(const_cast<char*>("loadobj.LoadObjError"), NULL, NULL);
     Py_INCREF(LoadObjError);
     PyModule_AddObject(m, "LoadObjError", LoadObjError);
+
+    return m;
 }
 
 static PyObject *
@@ -89,7 +95,7 @@ loadobj(PyObject *self, PyObject *args, PyObject *keywds)
         bool next_v_is_land = false;
         std::string land_name("");
         std::map<std::string, uint32_t> landm;
-
+        
         std::string line;
         std::string curr_segm("");
         std::string mtl_path("");
@@ -98,7 +104,7 @@ loadobj(PyObject *self, PyObject *args, PyObject *keywds)
             if (line.substr(0,6) == "mtllib") {
                 mtl_path = line.substr(6);
             }
-
+                
             if (line.substr(0,1) == "g"){
                 curr_segm  = line.substr(2);
                 if (segm.find(curr_segm) == segm.end())
@@ -218,7 +224,7 @@ loadobj(PyObject *self, PyObject *args, PyObject *keywds)
         PyObject *py_landm = PyDict_New();
         for (std::map<std::string, uint32_t>::iterator it=landm.begin(); it!=landm.end(); ++it)
             PyDict_SetItemString(py_landm, it->first.c_str(), Py_BuildValue("l", it->second));
-
+        
         PyObject *py_segm = PyDict_New();
         for (std::map<std::string, std::vector<uint32_t> >::iterator it=segm.begin(); it!=segm.end(); ++it) {
             unsigned n = it->second.size();

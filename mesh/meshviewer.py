@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2012 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2012-05-11.
 
 """
@@ -46,6 +44,7 @@ from multiprocessing import freeze_support
 import zmq
 import re
 import subprocess
+import tempfile
 
 # this is way too verbose, organize imports better
 from OpenGL.GL import glPixelStorei, glMatrixMode, glHint, glTexParameterf, glDisableClientState
@@ -90,8 +89,8 @@ if __package__ is not None:
 
 # this block is below the previous one to make my linter happy
 if __package__ is None:
-    print "this file cannot be executed as a standalone python module"
-    print "python -m psbody.mesh.%s arguments" % (os.path.splitext(os.path.basename(__file__))[0])
+    print("this file cannot be executed as a standalone python module")
+    print("python -m psbody.mesh.%s arguments" % (os.path.splitext(os.path.basename(__file__))[0]))
     sys.exit(-1)
 
 
@@ -101,7 +100,7 @@ def _run_self(args, stdin=None, stdout=None, stderr=None):
                             ['-m'] + ['%s.%s' % (__package__, os.path.splitext(os.path.basename(__file__))[0])] +
                             args,
                             stdin=stdin,
-                            stdout=stdout if stdout is not None else subprocess.PIPE,
+                            stdout=stdout,  # if stdout is not None else subprocess.PIPE,
                             stderr=stderr)
 
 
@@ -110,10 +109,10 @@ def _test_for_opengl():
         # from OpenGL.GLUT import glutInit
         glutInit()
     except Exception as e:
-        print >> sys.stderr, e
-        print 'failure'
+        print(e, file=sys.stderr)
+        print('failure')
     else:
-        print 'success'
+        print('success')
 
 
 test_for_opengl_cached = None
@@ -125,16 +124,30 @@ def test_for_opengl():
     .. note:: the result of the test is cached
 
     """
+
     global test_for_opengl_cached
     if test_for_opengl_cached is None:
-        p = _run_self(["TEST_FOR_OPENGL"], stderr=subprocess.PIPE)
-        p.wait()
-        line = '\n'.join(p.stdout.readlines())
-        test_for_opengl_cached = 'success' in line
-        if not test_for_opengl_cached:
-            print 'OpenGL test failed: '
-            print '\tstdout:', line
-            print '\tstderr:', '\n'.join(p.stderr.readlines())
+
+        with open(os.devnull) as dev_null, \
+            tempfile.TemporaryFile() as out, \
+            tempfile.TemporaryFile() as err:
+
+                p = _run_self(["TEST_FOR_OPENGL"],
+                              stdin=dev_null,
+                              stdout=out,
+                              stderr=err)
+                p.wait()
+
+                out.seek(0)
+                err.seek(0)
+
+                line = ''.join(out.read().decode())
+                test_for_opengl_cached = 'success' in line
+                if not test_for_opengl_cached:
+                    print('OpenGL test failed: ')
+                    print('\tstdout:', line)
+                    print('\tstderr:', '\n'.join(err.read().decode()))
+
     return test_for_opengl_cached
 
 
@@ -311,7 +324,7 @@ class MeshViewerLocal(object):
     managed = {}
 
     def __new__(cls, titlebar, uid, shape, keepalive, window_width, window_height):
-        assert(uid is None or isinstance(uid, str) or isinstance(uid, unicode))
+        assert(uid is None or isinstance(uid, str))
 
         if uid == 'stack':
             uid = ''.join(traceback.format_list(traceback.extract_stack()))
@@ -322,20 +335,28 @@ class MeshViewerLocal(object):
 
         result.client = zmq.Context.instance().socket(zmq.PUSH)
         result.client.linger = 0
-        result.p = _run_self([titlebar, str(shape[0]), str(shape[1]), str(window_width), str(window_height)])
 
-        line = result.p.stdout.readline()
-        current_port = re.match('<PORT>(.*?)</PORT>', line)
-        if not current_port:
-            raise Exception("MeshViewer remote appears to have failed to launch")
-        current_port = int(current_port.group(1))
-        result.client.connect('tcp://127.0.0.1:%d' % (current_port))
+        with open(os.devnull) as dev_null, \
+            tempfile.TemporaryFile() as err:
 
-        if uid:
-            MeshViewerLocal.managed[uid] = result
-        result.shape = shape
-        result.keepalive = keepalive
-        return result
+                result.p = _run_self([titlebar, str(shape[0]), str(shape[1]), str(window_width), str(window_height)],
+                                     stdin=dev_null,
+                                     stdout=subprocess.PIPE,
+                                     stderr=err)
+
+                line = result.p.stdout.readline().decode()
+                result.p.stdout.close()
+                current_port = re.match('<PORT>(.*?)</PORT>', line)
+                if not current_port:
+                    raise Exception("MeshViewer remote appears to have failed to launch")
+                current_port = int(current_port.group(1))
+                result.client.connect('tcp://127.0.0.1:%d' % (current_port))
+
+                if uid:
+                    MeshViewerLocal.managed[uid] = result
+                result.shape = shape
+                result.keepalive = keepalive
+                return result
 
     def get_subwindows(self):
         return [[MeshSubwindow(parent_window=self, which_window=(r, c)) for c in range(self.shape[1])] for r in range(self.shape[0])]
@@ -870,7 +891,7 @@ class MeshViewerRemote(object):
 
         # Print out our port so that our client can connect to us with it. Flush stdout immediately; otherwise
         # our client could wait forever.
-        print '<PORT>%d</PORT>\n' % (port,)
+        print('<PORT>%d</PORT>\n' % (port,))
         sys.stdout.flush()
 
         self.arcball = ArcBallT(width, height)
@@ -1109,7 +1130,7 @@ class MeshViewerRemote(object):
             mv.autorecenter = obj
             self.need_redraw = True
         elif label == 'titlebar':
-            assert(isinstance(obj, str) or isinstance(obj, unicode))
+            assert(isinstance(obj, str))
             self.titlebar = obj
             glutSetWindowTitle(obj)
         elif label == 'lighting_on':
@@ -1119,7 +1140,7 @@ class MeshViewerRemote(object):
             glClearColor(obj[0], obj[1], obj[2], 1.0)
             self.need_redraw = True
         elif label == 'save_snapshot':  # redraws for itself
-            assert(isinstance(obj, str) or isinstance(obj, unicode))
+            assert(isinstance(obj, str))
             self.snapshot(obj)
         elif label == 'get_keypress':
             self.keypress_port = obj
@@ -1203,7 +1224,6 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 2 and sys.argv[1] == 'TEST_FOR_OPENGL':
         _test_for_opengl()
-        sys.exit()
 
     elif len(sys.argv) > 2:
         m = MeshViewerRemote(titlebar=sys.argv[1],
@@ -1213,7 +1233,6 @@ if __name__ == '__main__':
                              height=int(sys.argv[5]))
 
     else:
-        print "#" * 10
-        print 'Usage:'
-        print "python -m %s.%s arguments" % (__package__, os.path.splitext(os.path.basename(__file__))[0])
-        sys.exit(-1)
+        print("#" * 10)
+        print('Usage:')
+        print("python -m %s.%s arguments" % (__package__, os.path.splitext(os.path.basename(__file__))[0]))
