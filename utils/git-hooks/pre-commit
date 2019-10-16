@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+import os
+import subprocess
+import sys
+
+STYLE_COMMAND = ['./utils/pycodestyle.py',
+                 '--max-line-length=120']
+
+
+def check_author_details():
+    """Check author name and email settings from
+       environment variables populated by git
+    """
+    name = os.environ.get('GIT_AUTHOR_NAME', '')
+    email = os.environ.get('GIT_AUTHOR_EMAIL', '')
+    retval = 0
+    if len(name) == 0:
+        print('Please set your name: git config --global user.name "Joe Scientist"')
+        retval = 1
+    if len(email) == 0 or not email.endswith('.mpg.de'):
+        print('Please set your work email: git config --global user.email "joe.scientist@tuebingen.mpg.de"')
+        retval = 1
+    return retval
+
+
+def get_files():
+    files = subprocess.check_output(['git', 'status', '--porcelain']).split('\n')
+    modified_files = [f[3:] for f in files if f and f[0] in 'AM' and f.endswith('.py')]
+    return modified_files
+
+
+def check_python_style(files):
+    if files:
+        try:
+            subprocess.check_output(STYLE_COMMAND + files)
+        except subprocess.CalledProcessError, e:
+            print('Python style violations were found:')
+            print(e.output)
+            return e.returncode
+    return 0
+
+
+def main():
+    print('Running pre-commit checks!')
+    files = get_files()
+    if check_author_details() or check_python_style(files):
+        print('Pre-commit check failed! Please fix detected issues and re-try,\n'
+              'or force the commit using "git commit --no-verify".')
+        sys.exit(1)
+    print('Pre-commit checks passed!')
+
+
+if __name__ == "__main__":
+    main()

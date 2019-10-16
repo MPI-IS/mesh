@@ -1,9 +1,5 @@
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
-
-import numpy as np
 import unittest
+import numpy as np
 import tempfile
 import os
 import shutil
@@ -52,7 +48,7 @@ class TestMesh(ExtendedTest):
 
     def test_ascii_bad_ply(self):
         """Ensure that the proper exception is raised when a file fails to be read."""
-        with self.assertRaisesRegexp(SerializationError, 'Failed to open PLY file\.'):
+        with self.assertRaisesRegex(SerializationError, 'Failed to open PLY file\.'):
             Mesh(filename=self.test_bad_ply_path)
 
         # The next two tests are unnecessary,
@@ -70,7 +66,7 @@ class TestMesh(ExtendedTest):
 
     def test_writing_ascii_ply(self):
         m = Mesh(filename=self.test_ply_path)
-        (fd, tempname) = tempfile.mkstemp()
+        (_, tempname) = tempfile.mkstemp()
         m.write_ply(tempname, ascii=True)
         with open(tempname, 'r') as f:
             candidate = f.read()
@@ -81,9 +77,9 @@ class TestMesh(ExtendedTest):
 
     def test_writing_bin_ply(self):
         m = Mesh(filename=self.test_ply_path)
-        (fd, tempname) = tempfile.mkstemp()
+        (_, tempname) = tempfile.mkstemp()
         m.write_ply(tempname)
-        with open(tempname, 'r') as f:
+        with open(tempname, 'rb') as f:
             candidate = f.read()
         os.remove(tempname)
         with open(self.test_bin_ply_path, 'rb') as f:
@@ -121,6 +117,9 @@ class TestMesh(ExtendedTest):
         mse = np.mean(np.sqrt(np.sum((vn - m.v / rad) ** 2, axis=1)))
         self.assertTrue(mse < 0.05)
 
+    @unittest.skipIf(
+        not os.path.isfile(os.path.join(test_data_folder, 'textured_mean_scape_female.obj')),
+        'No data file.')
     def test_landmark_loader(self):
         scan_fname = pjoin(test_data_folder, 'csr0001a.ply')
         scan_lmrk = pjoin(test_data_folder, 'csr0001a.lmrk')
@@ -150,21 +149,21 @@ class TestMesh(ExtendedTest):
         import yaml
         import pickle
         tmp_dir = tempfile.mkdtemp('bodylabs-test')
-        test_files = {
-            yaml: os.path.join(tmp_dir, 'landmarks.yaml'),
-            yaml: os.path.join(tmp_dir, 'landmarks.yml'),
-            json: os.path.join(tmp_dir, 'landmarks.json'),
-            pickle: os.path.join(tmp_dir, 'landmarks.pkl'),
-        }
-        test_data_ind = dict((n, long(v)) for n, v in template.landm.items())
+        test_files = [
+            (yaml, os.path.join(tmp_dir, 'landmarks.yaml'), 'w'),
+            (yaml, os.path.join(tmp_dir, 'landmarks.yml'), 'w'),
+            (json, os.path.join(tmp_dir, 'landmarks.json'), 'w'),
+            (pickle, os.path.join(tmp_dir, 'landmarks.pkl'), 'wb'),
+        ]
+        test_data_ind = dict((n, int(v)) for n, v in template.landm.items())
         test_data_xyz = dict((n, v.tolist()) for n, v in template.landm_xyz.items())
-        for loader, fn in test_files.items():
-            with open(fn, 'w') as f:
-                loader.dump(test_data_ind, f)
-            test(fn)
-            with open(fn, 'w') as f:
-                loader.dump(test_data_xyz, f)
-            test(fn)
+        for loader, filename, mode in test_files:
+            with open(filename, mode) as fd:
+                loader.dump(test_data_ind, fd)
+            test(filename)
+            with open(filename, mode) as fd:
+                loader.dump(test_data_xyz, fd)
+            test(filename)
 
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

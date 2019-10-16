@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2014 Max Planck Society. All rights reserved.
 
 import os
 import numpy as np
 import unittest
-
 
 from . import test_data_folder
 from psbody.mesh.mesh import Mesh
@@ -20,8 +17,6 @@ class TestAABBNormal(unittest.TestCase):
     def setUp(self):
         simpleobjpath = os.path.join(test_data_folder, 'test_doublebox.obj')
         self.simple_m = Mesh(filename=simpleobjpath)
-        complexobjpath = os.path.join(test_data_folder, 'hand_fixedbase.obj')
-        self.complex_m = Mesh(filename=complexobjpath)
         cylinderpath = os.path.join(test_data_folder, 'cylinder.obj')
         self.cylinder_m = Mesh(filename=cylinderpath)
         cylinder_trans_path = os.path.join(test_data_folder, 'cylinder_trans.obj')
@@ -72,11 +67,11 @@ class TestAABBNormal(unittest.TestCase):
             query_n[self.cylinder_trans_m.f[i_f, :], :] += tri_n[i_f, :]
         query_n = NormalizeRows(query_n)
 
-        closest_tri, closest_p = aabb_normals.aabbtree_n_nearest(tree_handle_no_normals, query_v, query_n)
+        closest_tri, _ = aabb_normals.aabbtree_n_nearest(tree_handle_no_normals, query_v, query_n)
         # all closest triangles are the two extremes
         self.assertTrue(np.unique(closest_tri).shape[0] <= 4)
 
-        closest_tri_n, closest_p_n = aabb_normals.aabbtree_n_nearest(tree_handle_normals, query_v, query_n)
+        closest_tri_n, _ = aabb_normals.aabbtree_n_nearest(tree_handle_normals, query_v, query_n)
         # there are four triangles that do not need to be reached, in the center and in the extremes
         self.assertTrue(np.unique(closest_tri_n).shape[0] >= (self.cylinder_m.f.shape[0] - 4))
 

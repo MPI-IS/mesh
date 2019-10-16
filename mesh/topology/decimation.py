@@ -75,14 +75,14 @@ def qslim_decimator_fast(mesh, factor=None, n_verts_desired=None):
     return load_from_ply_qslim(mesh, n_tris=len(mesh.f) * factor, want_optimal=True)
 
 
-def qslim_decimator(mesh, factor=None, n_verts_desired=None):
+def qslim_decimator_transformer(mesh, factor=None, n_verts_desired=None):
     """Return a simplified version of this mesh.
 
     A Qslim-style approach is used here.
 
     :param factor: fraction of the original vertices to retain
     :param n_verts_desired: number of the original vertices to retain
-    :returns: An Fx3 array of faces.
+    :returns: new_faces: An Fx3 array of faces, mtx: Transformation matrix
     """
 
     if factor is None and n_verts_desired is None:
@@ -144,7 +144,7 @@ def qslim_decimator(mesh, factor=None, n_verts_desired=None):
         cost = collapse_cost(Qv, r, c, mesh.v)
         if cost['collapse_cost'] > e[0]:
             heapq.heappush(queue, (cost['collapse_cost'], e[1]))
-            # print 'found outdated cost, %.2f < %.2f' % (e[0], cost['collapse_cost'])
+            # print('found outdated cost, %.2f < %.2f' % (e[0], cost['collapse_cost']))
             continue
         else:
 
@@ -187,8 +187,19 @@ def qslim_decimator(mesh, factor=None, n_verts_desired=None):
         nverts_total = (len(np.unique(faces.flatten())))
 
     new_faces, mtx = _get_sparse_transform(faces, len(mesh.v))
-    return LinearMeshTransform(mtx, new_faces)
+    return new_faces, mtx
 
+def qslim_decimator(mesh, factor=None, n_verts_desired=None):
+    """Return a simplified version of this mesh.
+
+    A Qslim-style approach is used here.
+
+    :param factor: fraction of the original vertices to retain
+    :param n_verts_desired: number of the original vertices to retain
+    :returns: An Fx3 array of faces.
+    """
+    new_faces, mtx = qslim_decimator_transformer(mesh, factor, n_verts_desired)
+    return LinearMeshTransform(mtx, new_faces)
 
 def _get_sparse_transform(faces, num_original_verts):
     verts_left = np.unique(faces.flatten())

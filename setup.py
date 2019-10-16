@@ -1,6 +1,6 @@
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# (c) 2015-2016 Max Planck Society
+# see accompanying LICENSE.txt file for licensing and contact information
+
 try:
     # setuptools is required
     from setuptools import setup, Extension as _Extension
@@ -27,7 +27,6 @@ namespace_package = 'psbody'
 # the CGAL archive
 CGAL_archive = convert_path('mesh/thirdparty/CGAL-4.7.tar.gz')
 
-# fetch CGAL archive
 
 def _get_version():
     """Convenient function returning the version of this package"""
@@ -92,7 +91,7 @@ class build_ext(_build_ext):
 
         self.set_undefined_options('install', ('boost_location', 'boost_location'),)
         if self.boost_location is not None and self.boost_location.strip():
-            # avoid empty folder name as it may happen and mess the compiler
+            # avoid empty folder name as it may happen and mess with the compiler
             #
             # we cannot assert that boost_location exist here, because we are
             # running this code for targets that do not require compilation
@@ -113,8 +112,13 @@ class build_ext(_build_ext):
         ext.include_dirs += [os.path.join(os.path.abspath(self.build_temp), 'CGAL-4.7', 'include')]
         if self.boost_location is not None:
             ext.include_dirs += [self.boost_location]
+
         # Remove empty paths
-        ext.include_dirs = filter(None, ext.include_dirs)
+        filtered = []
+        for in_dir in filter(None, ext.include_dirs):
+            filtered.append(in_dir)
+        ext.include_dirs = filtered
+
         return _build_ext.build_extension(self, ext)
 
     def run(self):
@@ -225,7 +229,7 @@ additional_kwargs = {}
 if has_setup_tools:
     # setup tools required for the 'setup_requires' ...
     additional_kwargs['setup_requires'] = ['setuptools', 'numpy']
-    additional_kwargs['install_requires'] = ['numpy >= 1.8', 'scipy', 'pyopengl', 'pyyaml', 'pyzmq']
+    additional_kwargs['install_requires'] = ['numpy >= 1.8', 'scipy', 'pyopengl', 'pyyaml', 'pyzmq', 'opencv-python']
     additional_kwargs['zip_safe'] = not all_extensions
     additional_kwargs['test_suite'] = "tests"
     additional_kwargs['namespace_packages'] = [namespace_package]
@@ -256,12 +260,11 @@ setup(name='%s-mesh' % namespace_package,
       package_dir=package_dir,
       ext_modules=all_extensions,
       author='Max Planck Perceiving Systems - Body Group',
-      author_email='raffi.enficiaud@tuebingen.mpg.de',
-      maintainer='Raffi Enficiaud',
-      maintainer_email='raffi.enficiaud@tuebingen.mpg.de',
+      maintainer='Jean-Claude Passy',
+      maintainer_email='jean-claude.passy@tuebingen.mpg.de',
       url='http://ps.is.tuebingen.mpg.de',
       description='Mesh and MeshViewer utilities',
-      license='Unlicensed',
+      license='See LICENSE.txt',
       cmdclass=cmdclass,
       ** additional_kwargs
       )

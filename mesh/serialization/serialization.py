@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2013 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2013-02-20.
-
 
 import re
 import os
@@ -13,7 +10,6 @@ import sys
 import numpy as np
 
 from ..errors import SerializationError
-
 
 """
 serialization.py
@@ -74,7 +70,7 @@ def load_from_obj(self, filename):
                     currLandm = line[1]
                 elif line[0] == 'mtllib':
                     self.materials_filepath = os.path.join(os.path.dirname(filename), line[1])
-                    self.materials_file = file(self.materials_filepath, 'r').readlines()
+                    self.materials_file = open(self.materials_filepath, 'r').readlines()
 
     self.v = np.array(v)
     self.f = np.array(f) - 1
@@ -149,7 +145,8 @@ def write_obj(self, filename, flip_faces=False, group=False, comments=None):
             if not hasattr(self, 'fn'):
                 self.reset_face_normals()
             normal_indices = self.fn[face_index][::ff] + 1
-            obj_file.write('f %d/%d/%d %d/%d/%d  %d/%d/%d\n' % tuple(np.array([vertex_indices, texture_indices, normal_indices]).T.flatten()))
+            obj_file.write('f %d/%d/%d %d/%d/%d  %d/%d/%d\n' % tuple(
+                np.array([vertex_indices, texture_indices, normal_indices]).T.flatten()))
         elif hasattr(self, 'fn'):
             normal_indices = self.fn[face_index][::ff] + 1
             obj_file.write('f %d//%d %d//%d  %d//%d\n' % tuple(np.array([vertex_indices, normal_indices]).T.flatten()))
@@ -158,7 +155,7 @@ def write_obj(self, filename, flip_faces=False, group=False, comments=None):
 
     with open(filename, 'w') as fi:
         if comments is not None:
-            if isinstance(comments, basestring):
+            if isinstance(comments, str):
                 comments = [comments]
             for comment in comments:
                 for line in comment.split("\n"):
@@ -214,14 +211,14 @@ def write_mtl(self, path, material_name, texture_name):
 
 
 def write_ply(self, filename, flip_faces=False, ascii=False, little_endian=True, comments=[]):
-    import plyutils
+    from psbody.mesh.serialization import plyutils
 
     if os.path.dirname(filename) and not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
 
     ff = -1 if flip_faces else 1
 
-    if isinstance(comments, basestring):
+    if isinstance(comments, str):
         comments = [comments]
     comments = filter(lambda c: len(c) > 0, sum(map(lambda c: c.split("\n"), comments), []))
 
@@ -272,10 +269,13 @@ def write_three_json(self, filename, name=""):
     mesh_data["vertices"] = self.v.flatten().tolist()
     mesh_data["normals"] = self.vn.flatten().tolist()
     mesh_data["uvs"] = [np.array([[vt[0], vt[1]] for vt in self.vt]).flatten().tolist()]
-    mesh_data["faces"] = np.array([[42, self.f[i][0], self.f[i][1], self.f[i][2], 0, self.ft[i][0], self.ft[i][1], self.ft[i][2], self.fn[i][0], self.fn[i][1], self.fn[i][2]] for i in range(len(self.f))]).flatten().tolist()
+    mesh_data["faces"] = np.array([[42, self.f[i][0], self.f[i][1], self.f[i][2], 0, self.ft[i][0], self.ft[i][1],
+                                    self.ft[i][2], self.fn[i][0], self.fn[i][1], self.fn[i][2]] for i in
+                                   range(len(self.f))]).flatten().tolist()
 
     json_or_js_file = open(filename, 'w')
     json_or_js_file.write(json.dumps(mesh_data, indent=4))
+    json_or_js_file.close()
 
 
 def write_json(self, filename, header="", footer="", name="", include_faces=True, texture_mode=True):
@@ -323,6 +323,7 @@ def write_json(self, filename, header="", footer="", name="", include_faces=True
         json_or_js_file.write(footer)
     else:
         json_or_js_file.write(json.dumps(mesh_data, indent=4))
+    json_or_js_file.close()
 
 
 def set_landmark_indices_from_ppfile(self, ppfilename):
@@ -340,23 +341,24 @@ def set_landmark_indices_from_ppfile(self, ppfilename):
 
 
 def set_landmark_indices_from_lmrkfile(self, lmrkfilename):
-    lmrkfile = open(lmrkfilename, 'rb')
-    self.landm_raw_xyz = {}
-    for line in lmrkfile.readlines():
-        if not line.strip():
-            continue
-        command = line.split()[0]
-        data = map(lambda x: float(x), line.split()[1:])
+    with open(lmrkfilename, 'r') as lmrkfile:
+        self.landm_raw_xyz = {}
 
-        if command == '_scale':
-            selfscale_factor = np.matrix(data)
-        elif command == '_translate':
-            self.caesar_translation_vector = np.matrix(data)
-        elif command == '_rotation':
-            self.caesar_rotation_matrix = np.matrix(data).reshape(3, 3)
-        else:
-            self.landm_raw_xyz[command] = [data[1], data[2], data[0]]
-    self.recompute_landmark_indices(lmrkfilename)
+        for line in lmrkfile.readlines():
+            if not line.strip():
+                continue
+            command = line.split()[0]
+            data = [float(x) for x in line.split()[1:]]
+
+            if command == '_scale':
+                selfscale_factor = np.matrix(data)
+            elif command == '_translate':
+                self.caesar_translation_vector = np.matrix(data)
+            elif command == '_rotation':
+                self.caesar_rotation_matrix = np.matrix(data).reshape(3, 3)
+            else:
+                self.landm_raw_xyz[command] = [data[1], data[2], data[0]]
+        self.recompute_landmark_indices(lmrkfilename)
 
 
 def _is_lmrkfile(filename):
@@ -387,12 +389,12 @@ def set_landmark_indices_from_any(self, landmarks):
         if re.search(".ya{0,1}ml$", landmarks):
             import yaml
             with open(landmarks) as f:
-                self.set_landmarks_from_raw(yaml.load(f))
+                self.set_landmarks_from_raw(yaml.load(f, Loader=yaml.FullLoader))
         elif re.search(".json$", landmarks):
             with open(landmarks) as f:
                 self.set_landmarks_from_raw(json.load(f))
         elif re.search(".pkl$", landmarks):
-            with open(landmarks) as f:
+            with open(landmarks, "rb") as f:
                 self.set_landmarks_from_raw(pickle.load(f))
         elif _is_lmrkfile(landmarks):
             self.set_landmark_indices_from_lmrkfile(landmarks)
@@ -422,13 +424,19 @@ def load_from_file(self, filename, use_cpp=True):
 
 
 def load_from_ply(self, filename):
-    import plyutils
+    from os.path import abspath, dirname, join
+
+    test_data_folder = abspath(join(dirname(__file__), '..', 'data', 'unittest'))
+
+    from psbody.mesh.serialization import plyutils
     try:
         res = plyutils.read(filename)
-    except plyutils.error, e:
-        raise SerializationError(e.message)
+    except plyutils.error as e:
+        raise SerializationError(e)
+
     self.v = np.array(res['pts']).T.copy()
     self.f = np.array(res['tri']).T.copy()
+
     if 'color' in res:
         self.set_vertex_colors(np.array(res['color']).T.copy() / 255)
     if 'normals' in res:

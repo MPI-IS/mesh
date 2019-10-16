@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2013 Max Planck Society. All rights reserved.
 # Created by Matthew Loper on 2013-02-20.
 
 
@@ -45,18 +43,22 @@ def landm_xyz(self, ordering=None):
 
 
 def recompute_landmark_indices(self, landmark_fname=None, safe_mode=True):
-    filtered_landmarks = dict(filter(lambda e, : e[1] != [0.0, 0.0, 0.0], self.landm_raw_xyz.items()) if (landmark_fname and safe_mode) else self.landm_raw_xyz.items())
+    filtered_landmarks = dict(
+        filter(
+            lambda e, : e[1] != [0.0, 0.0, 0.0],
+            self.landm_raw_xyz.items()
+        ) if (landmark_fname and safe_mode) else self.landm_raw_xyz.items())
     if len(filtered_landmarks) != len(self.landm_raw_xyz):
-        print "WARNING: %d landmarks in file %s are positioned at (0.0, 0.0, 0.0) and were ignored" % (len(self.landm_raw_xyz) - len(filtered_landmarks), landmark_fname)
+        print("WARNING: %d landmarks in file %s are positioned at (0.0, 0.0, 0.0) and were ignored" % (len(self.landm_raw_xyz) - len(filtered_landmarks), landmark_fname))
 
     self.landm = {}
     self.landm_regressors = {}
     if filtered_landmarks:
-        landmark_names = filtered_landmarks.keys()
-        closest_vertices, _ = self.closest_vertices(np.array(filtered_landmarks.values()))
+        landmark_names = list(filtered_landmarks.keys())
+        closest_vertices, _ = self.closest_vertices(np.array(list(filtered_landmarks.values())))
         self.landm = dict(zip(landmark_names, closest_vertices))
         if len(self.f):
-            face_indices, closest_points = self.closest_faces_and_points(np.array(filtered_landmarks.values()))
+            face_indices, closest_points = self.closest_faces_and_points(np.array(list(filtered_landmarks.values())))
             vertex_indices, coefficients = self.barycentric_coordinates_for_points(closest_points, face_indices)
             self.landm_regressors = dict([(name, (vertex_indices[i], coefficients[i])) for i, name in enumerate(landmark_names)])
         else:
@@ -66,6 +68,14 @@ def recompute_landmark_indices(self, landmark_fname=None, safe_mode=True):
 def set_landmarks_from_xyz(self, landm_raw_xyz):
     self.landm_raw_xyz = landm_raw_xyz if hasattr(landm_raw_xyz, 'keys') else dict((str(i), l) for i, l in enumerate(landm_raw_xyz))
     self.recompute_landmark_indices()
+
+
+def is_vertex(x):
+    return hasattr(x, "__len__") and len(x) == 3
+
+
+def is_index(x):
+    return isinstance(x, (int, np.int32, np.int64))
 
 
 def set_landmarks_from_raw(self, landmarks):
@@ -82,10 +92,10 @@ def set_landmarks_from_raw(self, landmarks):
     '''
     landmarks = landmarks if hasattr(landmarks, 'keys') else dict((str(i), l) for i, l in enumerate(landmarks))
 
-    if np.all(map(lambda x: hasattr(x, "__iter__") and len(x) == 3, landmarks.values())):
+    if all(is_vertex(x) for x in landmarks.values()):
         landmarks = dict((i, np.array(l)) for i, l in landmarks.items())
         self.set_landmarks_from_xyz(landmarks)
-    elif np.all(map(lambda x: isinstance(x, (int, long)), landmarks.values())):
+    elif all(is_index(x) for x in landmarks.values()):
         self.landm = landmarks
         self.recompute_landmark_xyz()
     else:

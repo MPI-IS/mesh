@@ -14,14 +14,15 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   Mesh<mesh>
-   Mesh Viewer<mesh_viewer>
-   Geometry<geometry>
+   Mesh<pages/mesh>
+   Mesh Viewer<pages/mesh_viewer>
+   Geometry<pages/geometry>
 
 
 What is this package about?
 ===========================
 This package contains core functions for manipulating Meshes and visualizing them.
+It requires ``Python 3.5+`` and is supported on Linux and macOS operating systems.
 
 
 Getting started
@@ -30,58 +31,73 @@ Getting started
 Installation
 ------------
 
-1. Get the last copy of the ``psbody-mesh`` package (ask around you, or go to our wiki to have an indication on
-   where to start)
 
-  a. for Linux, take a source distribution
-  b. for OSX, take a wheel distribution (ending with ``.whl``)
+There are several places where you can download the latest release of the ``psbody-mesh`` package:
 
-2. If you are on Linux, the source distribution needs to compile the package. For the compilation to succeed,
-   `Boost`_ is currently required, but only its **header** part. You may install Boost like this::
+* `Code Doc <https://code.is.localnet/series/3/8/>`_  , the internal documentation center of the MPI-IS
+* `GitLab <https://gitlab.tuebingen.mpg.de/ps-body/mesh>`_, the internal repository used for development
+* `GitHub <https://github.com/MPI-IS/mesh>`_ for the public release
 
-     sudo apt-get install libboost-dev
+``Code Doc`` contains the wheel and source distributions, and the documentation of the **complete** package.
 
-   or just download the last archive from `Boost`_ (version >= 1.57 required).
+``GitLab`` contains the source code of the **complete** package.
 
-3. Then finally just type the following::
+``GitHub`` contains the source code of the public, **limited** package.
 
-     virtualenv my_venv
-     . my_venv/bin/activate
-     pip install -U pip
-     pip install wheel_or_source_package
 
-   For the source package, if Boost is not installed system wise, but deflated from an archive taken from `Boost`_,
-   you may specify the location of the headers like this::
+First, create a dedicated Python virtual environment and activate it:
 
-     pip install --install-option="--boost-location=location/of/boost/include/folder" psbody_mesh_XXX.tar.gz
+.. code::
 
-   .. note::
+    $ python3 -m venv --copies my_venv
+    $ source my_venv/bin/activate
+	
+The easiest way to install the ``psbody-mesh`` package is to use the wheel distribution:
 
-     If ``pip`` tries to install the dependencies such as ``numpy`` while those are already installed in your (virtual)
-     environment, you can just add the ``--no-deps`` option to the previous command line to prevent that.
+.. code::
 
-   .. note::
+    $ pip install psbody_mesh_*.whl
 
-     Please note that using ``pip`` directly will work "better" that typing ``python setup.py install`` in the
-     sense that ``pip`` will install all the dependencies in one command.
+.. warning::
 
-4. If you are conscientious, you may also run the unit tests to check that the installation did go well. The unittest
-   files are inside the source archive, so you need to download the archive and deflate it somewhere to run the tests
-   after having installed the Mesh package.
-   Then running the tests is just a matter of typing the following commands::
+	Make sure to use to wheel corresponding to your OS and your Python version.
 
-     tar xzf psbody_mesh_XXX.tar.gz
-     cd psbody_mesh_XXX
-     python -m unittest discover -vvv .
+You can also install the ``psbody-mesh`` package using the source distribution.
+For this, you first need to install the `Boost <http://www.boost.org>`_ libraries.
+You can compile your own local version or simply do:
 
-   .. note::
+.. code::
 
-     The unit tests use external files that are currently on a Max Planck Institute shared folder. The location of the
-     folder is hard-coded in the file ``tests/__init__.py``, you may need to adapt this location with your own setup, or set
-     the environment variable ``PSBODY_TEST_DATA_FOLDER`` to the right location (look at the ``tests/__init__.py`` for
-     more information).
+	$ sudo apt-get install libboost-dev
 
-.. _Boost: http://www.boost.org
+and then install the  ``psbody-mesh`` package:
+
+.. code::
+
+	$ pip install psbody_mesh_*.tar.gz
+
+As a last option, you can also compile and install the ``psbody-mesh`` package using the Makefile.
+If you are using the system-wide ``Boost libraries``:
+
+.. code::
+
+	$ make all
+
+or the libraries locally installed:
+
+.. code::
+
+	$ BOOST_ROOT=/path/to/boost/libraries make all
+
+Testing
+-------
+
+To run the tests (only available in the **complete** package), simply do:
+
+.. code::
+
+	$ make tests
+
 
 Loading a mesh
 --------------

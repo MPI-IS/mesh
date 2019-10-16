@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# Copyright (c) 2018 Max Planck Society for non-commercial scientific research
-# This file is part of psbody.mesh project which is released under MPI License.
-# See file LICENSE.txt for full license details.
+# Copyright (c) 2012 Max Planck Society. All rights reserved.
+
+import os
 
 import numpy as np
 import unittest
@@ -23,8 +23,6 @@ class TestGeometry(unittest.TestCase):
     @skipUnless(has_cv2, 'skipping tests requiring OpenCV')
     def test_rodrigues(self):
         from psbody.mesh.geometry.rodrigues import rodrigues
-
-        self.assertRaises(lambda: rodrigues(np.array([0, 0])))
 
         test_data = (
             np.array([0, 0, 0], dtype=np.double),
@@ -59,7 +57,6 @@ class TestGeometry(unittest.TestCase):
         self.assertTrue(max(abs(our_answer - numpy_answer)) < 1e-15)
 
     def test_vert_normals(self):
-        import os
         from psbody.mesh.geometry.vert_normals import VertNormals
         from psbody.mesh.mesh import Mesh
         mesh = Mesh(filename=os.path.join(test_data_folder, 'sphere.ply'))
@@ -69,8 +66,6 @@ class TestGeometry(unittest.TestCase):
         vn_pred = pred.reshape((-1, 3))
 
         self.assertTrue(np.max(np.abs(vn_pred.flatten() - vn_obs.flatten())) < 1e-15)
-
-        return
 
     def test_barycentric_coordinates_of_projection(self):
         """Tests backwards compatibility with old matlab
@@ -109,8 +104,10 @@ class TestGeometry(unittest.TestCase):
         b_est = barycentric_coordinates_of_projection(p, q, u, v)
         self.assertTrue(np.max(np.abs(b_est.flatten('F') - b.flatten('F'))) < 1e-3)
 
+    @unittest.skipIf(
+        not os.path.isfile(os.path.join(test_data_folder, 'female_template.ply')),
+        'No data file.')
     def test_trinormal(self):
-        import os
 
         from psbody.mesh.mesh import Mesh
         from psbody.mesh.geometry.tri_normals import TriNormals, TriToScaledNormal, TriNormalsScaled, NormalizeRows

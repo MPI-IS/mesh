@@ -24,22 +24,34 @@ static PyMethodDef visibility_methods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-initvisibility(void)
+
+
+static struct PyModuleDef moduleDef =
 {
-    PyObject *m = Py_InitModule("visibility", visibility_methods);
+    PyModuleDef_HEAD_INIT,
+    "psbody.mesh.visibility", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    visibility_methods
+};
+
+PyMODINIT_FUNC PyInit_visibility(void)
+{
+    PyObject *m = PyModule_Create(&moduleDef);
     if (m == NULL)
-        return;
+        return NULL;
 
     import_array();
     VisibilityError = PyErr_NewException(const_cast<char*>("visibility.VisibilityError"), NULL, NULL);
     Py_INCREF(VisibilityError);
     PyModule_AddObject(m, "VisibilityError", VisibilityError);
+
+    return m;
 }
 
-void visibility_destructor(void *ptr)
+void visibility_destructor(PyObject *ptr)
 {
-    TreeAndTri* search = (TreeAndTri*)ptr;
+    TreeAndTri* search = (TreeAndTri*) PyCapsule_GetPointer(ptr, NULL);
     delete search;
 }
 
@@ -90,7 +102,7 @@ visibility_compute(PyObject *self, PyObject *args, PyObject *keywds)
 
         TreeAndTri* search;
         if(py_tree != NULL){
-            search = (TreeAndTri *)PyCObject_AsVoidPtr(py_tree);
+            search = (TreeAndTri *)PyCapsule_GetPointer(py_tree, NULL);
         }
         else{
 
