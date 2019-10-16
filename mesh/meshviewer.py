@@ -90,8 +90,8 @@ if __package__ is not None:
 
 # this block is below the previous one to make my linter happy
 if __package__ is None:
-    print "this file cannot be executed as a standalone python module"
-    print "python -m psbody.mesh.%s arguments" % (os.path.splitext(os.path.basename(__file__))[0])
+    print("this file cannot be executed as a standalone python module")
+    print("python -m psbody.mesh.%s arguments" % (os.path.splitext(os.path.basename(__file__))[0]))
     sys.exit(-1)
 
 
@@ -110,10 +110,10 @@ def _test_for_opengl():
         # from OpenGL.GLUT import glutInit
         glutInit()
     except Exception as e:
-        print >> sys.stderr, e
-        print 'failure'
+        print(e, file=sys.stderr)
+        print('failure')
     else:
-        print 'success'
+        print('success')
 
 
 test_for_opengl_cached = None
@@ -129,12 +129,12 @@ def test_for_opengl():
     if test_for_opengl_cached is None:
         p = _run_self(["TEST_FOR_OPENGL"], stderr=subprocess.PIPE)
         p.wait()
-        line = '\n'.join(p.stdout.readlines())
+        line = ''.join(str(p.stdout.readlines()))
         test_for_opengl_cached = 'success' in line
         if not test_for_opengl_cached:
-            print 'OpenGL test failed: '
-            print '\tstdout:', line
-            print '\tstderr:', '\n'.join(p.stderr.readlines())
+            print('OpenGL test failed: ')
+            print('\tstdout:', line)
+            print('\tstderr:', '\n'.join(p.stderr.readlines()))
     return test_for_opengl_cached
 
 
@@ -311,7 +311,7 @@ class MeshViewerLocal(object):
     managed = {}
 
     def __new__(cls, titlebar, uid, shape, keepalive, window_width, window_height):
-        assert(uid is None or isinstance(uid, str) or isinstance(uid, unicode))
+        assert(uid is None or isinstance(uid, str))
 
         if uid == 'stack':
             uid = ''.join(traceback.format_list(traceback.extract_stack()))
@@ -325,7 +325,7 @@ class MeshViewerLocal(object):
         result.p = _run_self([titlebar, str(shape[0]), str(shape[1]), str(window_width), str(window_height)])
 
         line = result.p.stdout.readline()
-        current_port = re.match('<PORT>(.*?)</PORT>', line)
+        current_port = re.match('<PORT>(.*?)</PORT>', line.decode(sys.stdout.encoding))
         if not current_port:
             raise Exception("MeshViewer remote appears to have failed to launch")
         current_port = int(current_port.group(1))
@@ -870,7 +870,7 @@ class MeshViewerRemote(object):
 
         # Print out our port so that our client can connect to us with it. Flush stdout immediately; otherwise
         # our client could wait forever.
-        print '<PORT>%d</PORT>\n' % (port,)
+        print('<PORT>%d</PORT>\n' % (port,))
         sys.stdout.flush()
 
         self.arcball = ArcBallT(width, height)
@@ -1109,7 +1109,7 @@ class MeshViewerRemote(object):
             mv.autorecenter = obj
             self.need_redraw = True
         elif label == 'titlebar':
-            assert(isinstance(obj, str) or isinstance(obj, unicode))
+            assert(isinstance(obj, str))
             self.titlebar = obj
             glutSetWindowTitle(obj)
         elif label == 'lighting_on':
@@ -1119,7 +1119,7 @@ class MeshViewerRemote(object):
             glClearColor(obj[0], obj[1], obj[2], 1.0)
             self.need_redraw = True
         elif label == 'save_snapshot':  # redraws for itself
-            assert(isinstance(obj, str) or isinstance(obj, unicode))
+            assert(isinstance(obj, str))
             self.snapshot(obj)
         elif label == 'get_keypress':
             self.keypress_port = obj
@@ -1213,7 +1213,7 @@ if __name__ == '__main__':
                              height=int(sys.argv[5]))
 
     else:
-        print "#" * 10
-        print 'Usage:'
-        print "python -m %s.%s arguments" % (__package__, os.path.splitext(os.path.basename(__file__))[0])
+        print("#" * 10)
+        print('Usage:')
+        print("python -m %s.%s arguments" % (__package__, os.path.splitext(os.path.basename(__file__))[0]))
         sys.exit(-1)

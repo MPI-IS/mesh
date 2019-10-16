@@ -35,18 +35,27 @@ static PyMethodDef SpatialsearchMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-
-
-PyMODINIT_FUNC
-initaabb_normals(void)
+static struct PyModuleDef moduleDef =
 {
-    (void) Py_InitModule("aabb_normals", SpatialsearchMethods);
+    PyModuleDef_HEAD_INIT,
+    "aabb_normals", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    SpatialsearchMethods
+};
+
+PyMODINIT_FUNC PyInit_aabb_normals(void)
+{
+    PyObject *module = PyModule_Create(&moduleDef);
+
     import_array();
+
+    return module;
 }
 
-void aabb_tree_destructor(void *ptr)
+void aabb_tree_destructor(PyObject *ptr)
 {
-    TreeAndTri* search = (TreeAndTri*)ptr;
+    TreeAndTri* search = (TreeAndTri*) PyCapsule_GetPointer(ptr, NULL);
     delete search;
 }
 
@@ -90,8 +99,8 @@ aabbtree_normals_compute(PyObject *self, PyObject *args)
     {
       TreeAndTri* search = new TreeAndTri(m_mesh_tri,m_mesh_points,eps,T,P);
 
-      PyObject* result = PyCObject_FromVoidPtr((void*)search, aabb_tree_destructor);
-      return Py_BuildValue("N", result);
+      PyObject* result = PyCapsule_New((void*)search, NULL, aabb_tree_destructor);
+      return result;
     }
     catch (mesh_aabb_tree_error&)
     {
@@ -107,7 +116,7 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OOO", &py_tree, &py_v, &py_n))
         return NULL;
 
-    TreeAndTri *search = (TreeAndTri *)PyCObject_AsVoidPtr(py_tree);
+    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
     npy_intp* v_dims = PyArray_DIMS(py_v);
     npy_intp* n_dims = PyArray_DIMS(py_n);
@@ -174,7 +183,7 @@ aabbtree_normals_selfintersects(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &py_tree))
         return NULL;
 
-    TreeAndTri *search = (TreeAndTri *)PyCObject_AsVoidPtr(py_tree);
+    TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
     for(Iterator it=search->triangles.begin();it!=search->triangles.end();++it)
         if(search->tree.do_intersect(*it))

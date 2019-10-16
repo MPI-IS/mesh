@@ -144,7 +144,7 @@ def qslim_decimator(mesh, factor=None, n_verts_desired=None):
         cost = collapse_cost(Qv, r, c, mesh.v)
         if cost['collapse_cost'] > e[0]:
             heapq.heappush(queue, (cost['collapse_cost'], e[1]))
-            # print 'found outdated cost, %.2f < %.2f' % (e[0], cost['collapse_cost'])
+            # print('found outdated cost, %.2f < %.2f' % (e[0], cost['collapse_cost']))
             continue
         else:
 

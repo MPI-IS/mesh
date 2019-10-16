@@ -47,7 +47,7 @@ def landm_xyz(self, ordering=None):
 def recompute_landmark_indices(self, landmark_fname=None, safe_mode=True):
     filtered_landmarks = dict(filter(lambda e, : e[1] != [0.0, 0.0, 0.0], self.landm_raw_xyz.items()) if (landmark_fname and safe_mode) else self.landm_raw_xyz.items())
     if len(filtered_landmarks) != len(self.landm_raw_xyz):
-        print "WARNING: %d landmarks in file %s are positioned at (0.0, 0.0, 0.0) and were ignored" % (len(self.landm_raw_xyz) - len(filtered_landmarks), landmark_fname)
+        print("WARNING: %d landmarks in file %s are positioned at (0.0, 0.0, 0.0) and were ignored" % (len(self.landm_raw_xyz) - len(filtered_landmarks), landmark_fname))
 
     self.landm = {}
     self.landm_regressors = {}
@@ -85,7 +85,7 @@ def set_landmarks_from_raw(self, landmarks):
     if np.all(map(lambda x: hasattr(x, "__iter__") and len(x) == 3, landmarks.values())):
         landmarks = dict((i, np.array(l)) for i, l in landmarks.items())
         self.set_landmarks_from_xyz(landmarks)
-    elif np.all(map(lambda x: isinstance(x, (int, long)), landmarks.values())):
+    elif np.all(map(lambda x: isinstance(x, int), landmarks.values())):
         self.landm = landmarks
         self.recompute_landmark_xyz()
     else:

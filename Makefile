@@ -52,14 +52,15 @@ $(tmpdirbuild)/package_creation: $(tmpdirbuild)
 	@echo "********"
 	@echo "********"
 	@echo "\033[0m"
-	@virtualenv --system-site-packages $(venv_dir)
+	@virtualenv --system-site-packages $(venv_dir) -p python3
 	@ . $(activate) && pip install --upgrade pip
 	@ . $(activate) && pip install --upgrade virtualenv
 	@ . $(activate) && pip install nose2
 	@ . $(activate) && echo `which pip` && pip -V
 	@ . $(activate) && pip install --upgrade setuptools && echo `which pip` && pip -V
 	@ . $(activate) && pip install --upgrade wheel && echo `which pip` && pip -V
-	@ . $(activate) && pip install numpy scipy pyopengl pillow pyzmq pyyaml && echo `which pip` && pip -V
+	@ . $(activate) && pip install numpy
+	@ . $(activate) && pip install scipy pyopengl pillow pyzmq pyyaml && echo `which pip` && pip -V
 	####### PACKAGE: creating SDIST target
 	@echo "\033[0;33m----- [" ${package_name} "] Creating the source distribution\033[0m"
 	@ . $(activate) && python setup.py sdist

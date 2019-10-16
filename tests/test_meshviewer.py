@@ -22,7 +22,7 @@ class TestMeshViewer(unittest.TestCase):
 
     def setUp(self):
         fnames = [os.path.join(test_data_folder, i) for i in os.listdir(test_data_folder) if os.path.splitext(i)[1].lower() == '.ply']
-        self.meshes = [Mesh(filename=fnames[i]) for i in range(4)]
+        self.meshes = [Mesh(filename=fname) for fname in fnames]
 
     def test_launch_smoke_test(self):
         """this test just opens a mesh window, waits, and kills the window"""
@@ -36,9 +36,9 @@ class TestMeshViewer(unittest.TestCase):
         sphere = Mesh(filename=os.path.join(test_data_folder, 'sphere.ply'))
         sphere.v = sphere.v / 10.
 
-        print 'keeping MeshViewer alive for 10 seconds..'
+        print('keeping MeshViewer alive for 10 seconds..')
         time.sleep(10)
-        print 'killing MeshViewer and exiting...'
+        print('killing MeshViewer and exiting...')
 
         if 0:
             # this cannot be unit tested
@@ -49,8 +49,8 @@ class TestMeshViewer(unittest.TestCase):
             sphere.v = sphere.v - row(np.mean(sphere.v, axis=0)) + row(np.array([click['x'], click['y'], click['z']]))
             mvs[subwin_row][subwin_col].set_dynamic_meshes([sphere])
 
-            print 'items in mouseclick dict are as follows:'
-            print click
+            print('items in mouseclick dict are as follows:')
+            print(click)
 
     @unittest.skipUnless(has_pil, "skipping test that requires Pillow")
     def test_snapshot(self):

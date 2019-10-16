@@ -13,10 +13,12 @@ Mesh module
 
 
 import os
+from functools import reduce
+
 import numpy as np
 
-import colors
-import search
+from . import colors
+from . import search
 
 try:
     from .serialization import serialization
@@ -153,7 +155,7 @@ class Mesh(object):
                 result[result < 0.0] = 0.0
                 return row(result)
             color = col(color)
-            color = np.concatenate([jet(color[i]) for i in xrange(color.size)], axis=0)
+            color = np.concatenate([jet(color[i]) for i in range(color.size)], axis=0)
 
         return np.ones_like(arr) * color
 

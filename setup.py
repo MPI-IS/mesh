@@ -92,7 +92,7 @@ class build_ext(_build_ext):
 
         self.set_undefined_options('install', ('boost_location', 'boost_location'),)
         if self.boost_location is not None and self.boost_location.strip():
-            # avoid empty folder name as it may happen and mess the compiler
+            # avoid empty folder name as it may happen and mess with the compiler
             #
             # we cannot assert that boost_location exist here, because we are
             # running this code for targets that do not require compilation
@@ -113,8 +113,13 @@ class build_ext(_build_ext):
         ext.include_dirs += [os.path.join(os.path.abspath(self.build_temp), 'CGAL-4.7', 'include')]
         if self.boost_location is not None:
             ext.include_dirs += [self.boost_location]
+
         # Remove empty paths
-        ext.include_dirs = filter(None, ext.include_dirs)
+        filtered = []
+        for in_dir in filter(None, ext.include_dirs):
+            filtered.append(in_dir)
+        ext.include_dirs = filtered
+
         return _build_ext.build_extension(self, ext)
 
     def run(self):

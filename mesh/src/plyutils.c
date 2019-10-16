@@ -10,17 +10,27 @@ static PyMethodDef PlyutilsMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+static struct PyModuleDef moduleDef =
+{
+    PyModuleDef_HEAD_INIT,
+    "serialization.plyutils", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    PlyutilsMethods
+};
+
 static PyObject *PlyutilsError;
 
-PyMODINIT_FUNC initplyutils(void) {
-    PyObject *m;
-    m = Py_InitModule("plyutils", PlyutilsMethods);
+PyMODINIT_FUNC PyInit_plyutils(void) {
+    PyObject *m = PyModule_Create(&moduleDef);
     if (m == NULL)
-        return;
+        return NULL;
 
     PlyutilsError = PyErr_NewException("plyutils.error", NULL, NULL);
     Py_INCREF(PlyutilsError);
     PyModule_AddObject(m, "error", PlyutilsError);
+
+    return m;
 }
 
 int has_color(p_ply ply) {
@@ -109,8 +119,15 @@ static PyObject * plyutils_read(PyObject *self, PyObject *args)
     tri = Py_BuildValue("[N,N,N]", PyList_New(n_faces), PyList_New(n_faces), PyList_New(n_faces));
 
     if (!ply_read(ply)) {
-        PyErr_SetString(PlyutilsError, "Read failed.");
-        return NULL;
+        char * msg = "Read failed. ";
+        char* catString = malloc(strlen(msg)+strlen(filename)+1);
+          strcpy(catString, msg);
+          strcat(catString, filename);
+
+        PyErr_SetString(PlyutilsError, catString);
+        // use the string then delete it when you're done.
+         free(catString);
+         return NULL;
     }
     ply_close(ply);
 
@@ -160,7 +177,7 @@ static PyObject * plyutils_write(PyObject *self, PyObject *args)
     res = 1;
 
     for (ii = 0; ii < PyList_Size(comments); ++ii) {
-        comment = PyString_AsString(PyObject_Str(PyList_GetItem(comments, ii)));
+        comment = PyBytes_AsString(PyObject_Str(PyList_GetItem(comments, ii)));
         res &= ply_add_comment(ply, comment);
     }
 
@@ -205,9 +222,9 @@ static PyObject * plyutils_write(PyObject *self, PyObject *args)
         }
         if(use_color){
             row = PyList_GetItem(color, ii);
-            res &= ply_write(ply, (unsigned char)PyInt_AsUnsignedLongMask(PyList_GetItem(row, 0)));
-            res &= ply_write(ply, (unsigned char)PyInt_AsUnsignedLongMask(PyList_GetItem(row, 1)));
-            res &= ply_write(ply, (unsigned char)PyInt_AsUnsignedLongMask(PyList_GetItem(row, 2)));
+            res &= ply_write(ply, (unsigned char)PyLong_AsUnsignedLongMask(PyList_GetItem(row, 0)));
+            res &= ply_write(ply, (unsigned char)PyLong_AsUnsignedLongMask(PyList_GetItem(row, 1)));
+            res &= ply_write(ply, (unsigned char)PyLong_AsUnsignedLongMask(PyList_GetItem(row, 2)));
         }
     }
     if (!res) {
