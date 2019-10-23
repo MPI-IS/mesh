@@ -1,3 +1,0 @@
-Perceiving Systems Mesh Package
-===============================
-

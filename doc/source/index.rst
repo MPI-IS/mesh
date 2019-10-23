@@ -51,7 +51,7 @@ First, create a dedicated Python virtual environment and activate it:
 
     $ python3 -m venv --copies my_venv
     $ source my_venv/bin/activate
-	
+
 The easiest way to install the ``psbody-mesh`` package is to use the wheel distribution:
 
 .. code::
@@ -98,6 +98,14 @@ To run the tests (only available in the **complete** package), simply do:
 
 	$ make tests
 
+Documentation
+-------------
+
+A detailed documentation can be compiled using the Makefile:
+
+.. code::
+
+	$ make documentation
 
 Loading a mesh
 --------------
@@ -125,35 +133,8 @@ From a previously loaded mesh ``my_mesh``, it is possible to visualize it inside
     # sets the first (top-left) mesh to my_mesh
     mvs[0][0].set_static_meshes([my_mesh])
 
-Running inside a virtual environment
-------------------------------------
-*Beware*: there is no problem in running the Mesh package inside a virtual environment. However,
-if you want to run within an interactive shell such as **IPython**, you **have** to install IPython
-inside the virtual environment as well::
-
-	In [1]: from psbody.mesh import MeshViewers
-
-	In [2]: mviewer = MeshViewers(shape=(2,2))
-	OpenGL test failed:
-	        stdout:
-	        stderr: /usr/bin/python: No module named psbody.mesh
-
-
-As shown above, the python binary is not the correct one. If after having installed IPython inside the
-virtual environment, you still encounter this issue, then it is likely that your bash is caching the
-``ipython`` command to the wrong one. Example::
-
-    >> type ipython
-    ipython is hashed (/usr/bin/ipython)
-    >> which ipython
-    /media/renficiaud/linux-data/Code/sandbox/venv_meshviewer/bin/ipython
-    >> hash -r # clears the cache
-    >> type ipython
-    /media/renficiaud/linux-data/Code/sandbox/venv_meshviewer/bin/ipython
-
-
 Caching
-=======
+-------
 
 Some operations make use of caching for performance reasons. The default folder used for caching is
 

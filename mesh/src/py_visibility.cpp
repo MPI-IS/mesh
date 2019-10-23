@@ -19,41 +19,44 @@ visibility_compute(PyObject *self, PyObject *args, PyObject *keywds);
 static PyObject *VisibilityError;
 
 static PyMethodDef visibility_methods[] = {
-    {"visibility_compute",  (PyCFunction) visibility_compute,
-        METH_VARARGS | METH_KEYWORDS, "visibility_compute."},
+    {"visibility_compute",
+        (PyCFunction)visibility_compute,
+        METH_VARARGS | METH_KEYWORDS,
+        "visibility_compute."},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 
-
-static struct PyModuleDef moduleDef =
-{
-    PyModuleDef_HEAD_INIT,
-    "psbody.mesh.visibility", /* name of module */
-    "",          /* module documentation, may be NULL */
-    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
-    visibility_methods
-};
-
 PyMODINIT_FUNC PyInit_visibility(void)
 {
-    PyObject *m = PyModule_Create(&moduleDef);
-    if (m == NULL)
-        return NULL;
+    PyObject *m;
+
+    /// Static module-definition table
+    static PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psbody.mesh.visibility", /* name of module */
+        "",          /* module documentation, may be NULL */
+        -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+        visibility_methods                          /* m_methods */
+    };
+
+    /// Actually initialize the module object,
+    /// using the new Python 3 module-definition table
+    m = PyModule_Create(&moduledef);
+
 
     import_array();
     VisibilityError = PyErr_NewException(const_cast<char*>("visibility.VisibilityError"), NULL, NULL);
     Py_INCREF(VisibilityError);
     PyModule_AddObject(m, "VisibilityError", VisibilityError);
 
+    /// Initialize and check module
+    if (m == NULL)                        { return NULL; }
+
+    /// Return module object
     return m;
 }
 
-void visibility_destructor(PyObject *ptr)
-{
-    TreeAndTri* search = (TreeAndTri*) PyCapsule_GetPointer(ptr, NULL);
-    delete search;
-}
 
 template <typename CTYPE, int PYTYPE>
 npy_intp parse_pyarray(const PyArrayObject *py_arr, const array<CTYPE,3>* &cpp_arr){
@@ -198,12 +201,10 @@ visibility_compute(PyObject *self, PyObject *args, PyObject *keywds)
         _internal_compute(search, pN, pCams, C, use_sensors,
                           pSensors, min_dist, visibility, normal_dot_cam);
 
-        if(py_tree == NULL){
-            PyObject* py_bin_visibility = PyCapsule_New((void*)search, NULL, visibility_destructor);
-            PyObject* py_normal_dot_cam = PyCapsule_New((void*)search, NULL, visibility_destructor);
-        }
-
+        // Cleaning and returning
+        delete search;
         return Py_BuildValue("NN",py_bin_visibility, py_normal_dot_cam);
+
     } catch (VisibilityException& e) {
         PyErr_SetString(VisibilityError, e.what());
         return NULL;
