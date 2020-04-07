@@ -1,5 +1,6 @@
 setuptools
 numpy
+matplotlib
 scipy
 pyopengl
 pillow
