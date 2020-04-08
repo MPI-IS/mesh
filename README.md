@@ -21,13 +21,13 @@ Requirements
 ------------
 
 You first need to install the `Boost <http://www.boost.org>`_ libraries.
-You can compile your own local version or simply do on Linux:
+You can compile your own local version or simply do on Linux
 
 ```
 $ sudo apt-get install libboost-dev
 ```
 
-On macOS:
+or on macOS
 
 ```
 $ brew install boost
@@ -43,17 +43,10 @@ $ python3 -m venv --copies my_venv
 $ source my_venv/bin/activate
 ```
 
-You should then compile and install the ``psbody-mesh`` package using the Makefile.
-If you are using the system-wide ``Boost`` libraries:
+You should then compile and install the ``psbody-mesh`` package easily using the Makefile:
 
 ```
-$ make all
-```
-
-or the libraries locally installed:
-
-```
-$ BOOST_ROOT=/path/to/boost/libraries make all
+$ BOOST_INCLUDE_DIRS=/path/to/boost/include make all
 ```
 
 Testing

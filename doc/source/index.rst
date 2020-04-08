@@ -64,11 +64,18 @@ The easiest way to install the ``psbody-mesh`` package is to use the wheel distr
 
 You can also install the ``psbody-mesh`` package using the source distribution.
 For this, you first need to install the `Boost <http://www.boost.org>`_ libraries.
-You can compile your own local version or simply do:
+You can compile your own local version or simply do on Linux
 
 .. code::
 
-	$ sudo apt-get install libboost-dev
+    $ sudo apt-get install libboost-dev
+
+or on macOS
+
+.. code::
+
+    $ brew install boost
+
 
 and then install the  ``psbody-mesh`` package:
 
@@ -76,18 +83,11 @@ and then install the  ``psbody-mesh`` package:
 
 	$ pip install psbody_mesh_*.tar.gz
 
-As a last option, you can also compile and install the ``psbody-mesh`` package using the Makefile.
-If you are using the system-wide ``Boost libraries``:
+As a last option, you can also compile and install the ``psbody-mesh`` package using the Makefile:
 
 .. code::
 
-	$ make all
-
-or the libraries locally installed:
-
-.. code::
-
-	$ BOOST_ROOT=/path/to/boost/libraries make all
+	$ BOOST_INCLUDE_DIRS=/path/to/boost/include make all
 
 Testing
 -------
