@@ -172,7 +172,7 @@ def MeshViewer(titlebar='Mesh Viewer',
                uid=None,
                autorecenter=True,
                shape=(1, 1),
-               keepalive=False,
+               keepalive=True,
                window_width=1280,
                window_height=960,
                snapshot_camera=None):
@@ -213,7 +213,7 @@ def MeshViewer(titlebar='Mesh Viewer',
 
 def MeshViewers(shape=(1, 1),
                 titlebar="Mesh Viewers",
-                keepalive=False,
+                keepalive=True,
                 window_width=1280,
                 window_height=960):
     """Allows subplot-style inspection of primitives in multiple subwindows.
@@ -497,7 +497,7 @@ class MeshViewerLocal(object):
         self._send_pyobj('save_snapshot', path, blocking, which_window)
 
     def __del__(self):
-        if not self.keepalive:
+        if self.keepalive:
             self.p.terminate()
 
 
