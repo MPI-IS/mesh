@@ -3,20 +3,14 @@ import unittest
 import os
 import time
 import itertools
-import numpy as np
 
 from psbody.mesh.meshviewer import MeshViewers
 from psbody.mesh.mesh import Mesh
 from . import test_data_folder
 
-try:
-    import PIL
-    has_pil = True
-except ImportError:
-    has_pil = False
-
 
 class TestMeshViewer(unittest.TestCase):
+    """Check the MeshViewer class."""
 
     def setUp(self):
 
@@ -39,24 +33,10 @@ class TestMeshViewer(unittest.TestCase):
         time.sleep(10)
         print('killing MeshViewer and exiting...')
 
-        if 0:  # legacy: this cannot be unit tested
-            from psbody.mesh.utils import row
-            click = self.mvs[0][0].get_mouseclick()
-            subwin_row = click['which_subwindow'][0]
-            subwin_col = click['which_subwindow'][1]
-            sphere = Mesh(filename=os.path.join(test_data_folder, 'sphere.ply'))
-            sphere.v = sphere.v / 10.
-            sphere.v = sphere.v - row(np.mean(sphere.v, axis=0)) + \
-                row(np.array([click['x'], click['y'], click['z']]))
-            self.mvs[subwin_row][subwin_col].set_dynamic_meshes([sphere])
-
-            print('items in mouseclick dict are as follows:')
-            print(click)
-
-    @unittest.skipUnless(has_pil, "skipping test that requires Pillow")
     def test_snapshot(self):
         """test snapshots from mesh windows"""
 
         import tempfile
         with tempfile.NamedTemporaryFile(suffix='.png', prefix='test_snapshot') as f:
             self.mvs[0][0].save_snapshot(f.name)
+            self.assertTrue(os.path.isfile(f.name))
