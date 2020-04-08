@@ -153,7 +153,64 @@ prior to any loading of the Mesh package:
   >> from psbody.mesh import Mesh
   # now uses the specified cache
 
+Mesh Viewer
+-----------
 
+``meshviewer`` is a program that allows you to display polygonal meshes produced by ``mesh`` package.
+
+Viewing a mesh on a local machine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The most straightforward use-case is viewing the mesh on the same machine where it is stored.  To do this simply run
+
+.. code::
+
+   $ meshviewer view sphere.obj
+
+This will create an interactive window with your mesh rendering. You can render more than one mesh in the same window by passing several paths to ``view`` command
+
+.. code::
+
+   $ meshviewer view sphere.obj cylinder.obj
+
+This will arrange the subplots horizontally in a row.  If you want a grid arrangement, you can specify the grid parameters explicitly
+
+.. code::
+
+   $ meshviewer view -nx 2 -ny 2 *.obj
+
+Viewing a mesh from a remote machine
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is also possible to view a mesh stored on a remote machine.  To do this you need mesh to be installed on both the local and the remote machines.  You start by opening an empty viewer window listening on a network port
+
+.. code::
+
+   (local) $ meshviewer open --port 3000
+
+To stream a shape to this viewer you have to either pick a port that is visible from the remote machine or by manually exposing the port when connecting.  For example, through SSH port forwarding
+
+.. code::
+
+   (local) $ ssh -R 3000:127.0.0.1:3000 user@host
+
+Then on a remote machine you use ``view`` command pointing to the locally forwarded port
+
+.. code::
+
+   (remote) $ meshviewer view -p 3000 sphere.obj
+
+This should display the remote mesh on your local viewer. In case it does not it might be caused by the network connection being closed before the mesh could be sent. To work around this one can try increasing the timeout up to 1 second
+
+.. code::
+
+   (remote) $ meshviewer view -p 3000 --timeout 1 sphere.obj
+
+To take a snapshot you should locally run a `snap` command
+
+.. code::
+
+   (local) $ meshviewer snap -p 3000 sphere.png
 
 Indices and tables
 ==================

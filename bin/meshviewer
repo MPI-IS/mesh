@@ -1,0 +1,379 @@
+#!/usr/bin/env python3
+
+
+import textwrap
+
+__doc__ = textwrap.dedent(
+    """
+    `meshviewer` is a program that allows you to display polygonal
+    meshes produced by `mesh` package.
+
+    Viewing a mesh on a local machine
+    ---------------------------------
+
+    The most straightforward use-case is viewing the mesh on the same
+    machine where it is stored.  To do this simply run
+
+    ```
+    $ meshviewer view sphere.obj
+    ```
+
+    This will create an interactive window with your mesh rendering.
+    You can render more than one mesh in the same window by passing
+    several paths to `view` command
+
+    ```
+    $ meshviewer view sphere.obj cylinder.obj
+    ```
+
+    This will arrange the subplots horizontally in a row.  If you want
+    a grid arrangement, you can specify the grid parameters explicitly
+
+    ```
+    $ meshviewer view -nx 2 -ny 2 *.obj
+    ```
+
+    Viewing a mesh from a remote machine
+    ------------------------------------
+
+    It is also possible to view a mesh stored on a remote machine.  To
+    do this you need mesh to be installed on both the local and the
+    remote machines.  You start by opening an empty viewer window
+    listening on a network port
+
+    ```
+    (local) $ meshviewer open --port 3000
+    ```
+
+    To stream a shape to this viewer you have to either pick a port
+    that is visible from the remote machine or by manually exposing
+    the port when connecting.  For example, through SSH port
+    forwarding
+
+    ```
+    (local) $ ssh -R 3000:127.0.0.1:3000 user@host
+    ```
+
+    Then on a remote machine you use `view` command pointing to the
+    locally forwarded port
+
+    ```
+    (remote) $ meshviewer view -p 3000 sphere.obj
+    ```
+
+    This should display the remote mesh on your local viewer. In case it
+    does not it might be caused by the network connection being closed
+    before the mesh could be sent. To work around this one can try
+    increasing the timeout up to 1 second
+
+    ```
+    (remote) $ meshviewer view -p 3000 --timeout 1 sphere.obj
+    ```
+
+    To take a snapshot you should locally run a `snap` command
+
+    ```
+    (local) $ meshviewer snap -p 3000 sphere.png
+    ```
+    """)
+
+
+import argparse
+import logging
+import sys
+import time
+
+from psbody.mesh.mesh import Mesh
+from psbody.mesh.meshviewer import (
+    MESH_VIEWER_DEFAULT_TITLE,
+    MESH_VIEWER_DEFAULT_SHAPE,
+    MESH_VIEWER_DEFAULT_WIDTH,
+    MESH_VIEWER_DEFAULT_HEIGHT,
+    ZMQ_HOST,
+    MeshViewerLocal,
+    MeshViewerRemote)
+
+
+logging.basicConfig(level=logging.INFO)
+
+
+parser_root = argparse.ArgumentParser(
+    add_help=False,
+    description="View the polygonal meshes, locally and across the network",
+    epilog=__doc__,
+    formatter_class=argparse.RawTextHelpFormatter)
+
+subparsers = parser_root.add_subparsers(dest="command")
+subparsers.required = True
+
+parser_open = subparsers.add_parser("open", add_help=False)
+parser_open.add_argument(
+    "-p", "--port",
+    help="local port to listen for incoming commands",
+    type=int)
+
+parser_view = subparsers.add_parser("view", add_help=False)
+parser_view.add_argument(
+    "-h", "--host",
+    help="remote host",
+    metavar="HOSTNAME",
+    type=str)
+parser_view.add_argument(
+    "-p", "--port",
+    help="remote port",
+    type=int)
+parser_view.add_argument(
+    "-ix", "--subwindow-index-horizontal",
+    help="horizontal index of the target subwindow",
+    metavar="INDEX",
+    type=int)
+parser_view.add_argument(
+    "-iy", "--subwindow-index-vertical",
+    help="vertical index of the target subwindow",
+    metavar="INDEX",
+    type=int)
+parser_view.add_argument(
+    "--timeout",
+    help="wait for some time after sending the mesh to let it render",
+    metavar="SECONDS",
+    type=float,
+    default=0.5)
+parser_view.add_argument(
+    "filename",
+    help="path to the mesh file",
+    type=str,
+    nargs="+")
+
+for parser in parser_open, parser_view:
+    window_options = parser.add_argument_group("window options")
+    window_options.add_argument(
+        "-t", "--title",
+        help="window title",
+        type=str)
+    window_options.add_argument(
+        "-ww", "-wx", "--window-width",
+        help="window width in pixels",
+        metavar="PIXELS",
+        type=int)
+    window_options.add_argument(
+        "-wh", "-wy", "--window-height",
+        help="window height in pixels",
+        metavar="PIXELS",
+        type=int)
+    window_options.add_argument(
+        "-nx", "--subwindow-number-horizontal",
+        help="number of horizontal subwindows",
+        metavar="NUMBER",
+        type=int)
+    window_options.add_argument(
+        "-ny", "--subwindow-number-vertical",
+        help="number of vertical subwindows",
+        metavar="NUMBER",
+        type=int)
+
+parser_snap = subparsers.add_parser("snap", add_help=False)
+parser_snap.add_argument(
+    "-h", "--host",
+    help="remote host",
+    type=str)
+parser_snap.add_argument(
+    "-p", "--port",
+    help="remote port",
+    type=int,
+    required=True)
+parser_snap.add_argument(
+    "filename",
+    help="path to the output snapshot",
+    type=str)
+
+
+for p in parser_root, parser_open, parser_view, parser_snap:
+    p.add_argument("--help", action="help")
+
+
+def dispatch_command(args):
+    """
+    Performs a sanity check of the passed arguments and then
+    dispatches the appropriate command.
+    """
+
+    if args.command == "open":
+        start_server(args)
+        return
+
+    if not args.port:
+        client = start_local_client(args)
+    else:
+        client = start_remote_client(args)
+
+    if args.command == "snap":
+        take_snapshot(client, args)
+
+    if args.command == "view":
+        if args.port is not None:
+            # Below is a list of contradicting settings: it futile to
+            # try to change the parameters of a mesh viewer already
+            # running on a remote machine.
+            if args.title is not None:
+                logging.warning(
+                    "--title is ignored when working with remote viewer")
+
+            if args.window_width is not None:
+                logging.warning(
+                    "--window-width is ignored when working with remote viewer")
+
+            if args.window_height is not None:
+                logging.warning(
+                    "--window-height is ignored when working with remote viewer")
+
+            if args.subwindow_number_horizontal is not None:
+                logging.warning(
+                    "--subwindow-number-horizontal is ignored when working "
+                    "with remote viewer")
+
+            if args.subwindow_number_vertical is not None:
+                logging.warning(
+                    "--subwindow-number-vertical is ignored when working "
+                    "with remote viewer")
+
+            # This one is a bit different: while it should be
+            # technically possible to stream the mesh in a specific
+            # subwindow, we currently don't support that.
+            if (
+                args.subwindow_index_horizontal is not None or
+                args.subwindow_index_vertical is not None
+            ):
+                logging.warning(
+                    "unfortunately, drawing to a specific subwindow is not "
+                    "supported when working with remote viewer and the first "
+                    "subwindow is going to be used instead")
+
+        if (
+            args.subwindow_index_horizontal is not None and
+            args.subwindow_index_vertical is None
+        ) or (
+            args.subwindow_index_horizontal is None and
+            args.subwindow_index_vertical is not None
+        ):
+            logging.fatal(
+                "you have to specify both horizontal "
+                "and vertical subwindow incides")
+            return
+
+        if (
+            args.subwindow_index_horizontal is not None and
+            args.subwindow_index_vertical is not None
+        ):
+            display_single_subwindow(client, args)
+        else:
+            display_multi_subwindows(client, args)
+
+        # Basically, wait for send_pyobj() to actually send everything
+        # before terminating.
+        time.sleep(args.timeout)
+
+
+def start_server(args):
+    """
+    Starts a meshviewer window on a local machine.
+
+    This function opens a mesh viewer window that listens for command
+    on a given port.
+    """
+    server = MeshViewerRemote(
+        titlebar=args.title or MESH_VIEWER_DEFAULT_TITLE,
+        subwins_vert=args.subwindow_number_vertical or MESH_VIEWER_DEFAULT_SHAPE[1],
+        subwins_horz=args.subwindow_number_horizontal or MESH_VIEWER_DEFAULT_SHAPE[0],
+        width=args.window_width or MESH_VIEWER_DEFAULT_WIDTH,
+        height=args.window_height or MESH_VIEWER_DEFAULT_HEIGHT,
+        port=args.port)
+    return server
+
+
+def start_local_client(args):
+    """
+    Starts a local meshviewer not connected to anywhere.
+
+    This function internally opens a mesh viewer window listening on a
+    random port.
+    """
+    client = MeshViewerLocal(
+        titlebar=args.title or MESH_VIEWER_DEFAULT_TITLE,
+        window_width=args.window_width or MESH_VIEWER_DEFAULT_WIDTH,
+        window_height=args.window_height or MESH_VIEWER_DEFAULT_HEIGHT,
+        shape=(
+            args.subwindow_number_vertical or 1,
+            args.subwindow_number_horizontal or len(args.filename),
+        ),
+        keepalive=True)
+    return client
+
+
+def start_remote_client(args):
+    """
+    Starts a meshviewer client connected to a remote machine.
+
+    This function does not create a new window, but is necessary to
+    stream the mesh to a remote viewer.
+    """
+    client = MeshViewerLocal(
+        host=args.host or ZMQ_HOST,
+        port=args.port)
+    return client
+
+
+def display_single_subwindow(client, args):
+    """
+    Displays a single mesh in a given subwindow.
+    """
+    ix = args.subwindow_index_horizontal
+    iy = args.subwindow_index_vertical
+
+    try:
+        subwindow = client.get_subwindows()[iy][ix]
+    except IndexError:
+        logging.fatal(
+            "cannot find subwindow ({}, {}). "
+            "The current viewer shape is {}x{} subwindows, "
+            "indexing is zero-based."
+            .format(ix, iy, *client.shape))
+        return
+
+    meshes = [Mesh(filename=filename) for filename in args.filename]
+    subwindow.set_static_meshes(meshes)
+
+
+def display_multi_subwindows(client, args):
+    """
+    Displays a list of meshes. One mesh per subwindow.
+    """
+    grid = client.get_subwindows()
+
+    subwindows = [
+        subwindow
+        for row in grid
+        for subwindow in row
+    ]
+
+    if len(subwindows) < len(args.filename):
+        logging.warning(
+            "cannot display {0} meshes in {1} subwindows. "
+            "Taking the first {1}.".format(
+                len(args.filename), len(subwindows)))
+
+    for subwindow, filename in zip(subwindows, args.filename):
+        mesh = Mesh(filename=filename)
+        subwindow.set_static_meshes([mesh])
+
+
+def take_snapshot(client, args):
+    """
+    Take snapshot and dump it into a file.
+    """
+    client.save_snapshot(args.filename)
+
+
+if __name__ == "__main__":
+    args = parser_root.parse_args()
+    dispatch_command(args)
+    sys.exit(0)
