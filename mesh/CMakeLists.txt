@@ -80,6 +80,20 @@ target_compile_definitions(spatialsearch PRIVATE
     ${DEFINES_MESH_EXTENSIONS_WITH_CGAL_WITHOUT_LINK})
 
 
+    
+# visibility
+python_add_library(TARGET visibility SOURCES 
+    src/py_visibility.cpp
+    src/visibility.cpp
+    )
+target_include_directories(visibility PRIVATE 
+  ${libcgalroot}/include
+  ${NUMPY_INCLUDE_PATH}
+  ${Boost_INCLUDE_DIRS})
+set_property(TARGET visibility PROPERTY FOLDER "GeometryExt/")
+target_compile_definitions(visibility PRIVATE
+    ${DEFINES_MESH_EXTENSIONS_WITH_CGAL_WITHOUT_LINK})
+
 
 # serialization extensions
 
@@ -97,3 +111,4 @@ target_include_directories(loadobj PRIVATE
   ${NUMPY_INCLUDE_PATH}
   ${Boost_INCLUDE_DIRS})
 set_property(TARGET loadobj PROPERTY FOLDER "SerializationExt/")
+

@@ -44,6 +44,13 @@ typedef AABB_triangle_traits::Point_and_primitive_id Point_and_Primitive_id;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
 typedef Tree::Object_and_primitive_id Object_and_Primitive_id;
 
+// if we are on MSCV, we need to instantiate the extern variable ORIGIN otherwise there will be a linking error
+#ifdef _MSC_VER
+namespace CGAL {
+    const CGAL::Origin ORIGIN;
+};
+#endif
+
 #include "visibility.h"
 
 struct VisibilityTask{
