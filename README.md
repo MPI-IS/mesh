@@ -1,3 +1,7 @@
+[![Build Status](
+    https://raw.githubusercontent.com/MPI-IS-BambooAgent/sw_badges/master/badges/plans/ps-body-mesh/tag.svg?sanitize=true)](
+        #-perceiving-systems-mesh-package)
+
 Perceiving Systems Mesh Package
 ===============================
 
