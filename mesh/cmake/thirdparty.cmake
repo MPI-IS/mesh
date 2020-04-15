@@ -26,7 +26,7 @@ find_package(PythonInterp REQUIRED)
 
 # numpy
 execute_process(
-  COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print numpy.get_include()"
+  COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
   OUTPUT_VARIABLE NUMPY_INCLUDE_PATH
   ERROR_VARIABLE  NUMPY_ERROR
   OUTPUT_STRIP_TRAILING_WHITESPACE

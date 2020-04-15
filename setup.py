@@ -61,6 +61,9 @@ class build_deflate_cgal(Command):
 
         CGAL_dir_deflate = os.path.abspath(self.build_temp)
 
+        if os.name == 'nt': # if on windows, MSVC compiler will look for the Release folder
+            CGAL_dir_deflate = os.path.join(CGAL_dir_deflate, 'Release')
+
         log.info('[CGAL] deflating cgal from "%s" to "%s"', CGAL_archive, CGAL_dir_deflate)
         if not os.path.exists(os.path.join(CGAL_dir_deflate, 'CGAL-4.7')):
             import tarfile
