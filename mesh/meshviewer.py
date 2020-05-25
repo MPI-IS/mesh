@@ -272,9 +272,9 @@ class MeshSubwindow(object):
     def set_background_color(self, background_color, blocking=False):
         self.parent_window.set_background_color(background_color, blocking=blocking, which_window=self.which_window)
 
-    def save_snapshot(self, path, blocking=False, wait_time=1):
+    def save_snapshot(self, path, blocking=False):
         self.parent_window.save_snapshot(
-            path, blocking=blocking, which_window=self.which_window, wait_time=wait_time)
+            path, blocking=blocking, which_window=self.which_window)
 
     def get_event(self):
         return self.parent_window.get_event()
@@ -490,15 +490,12 @@ class MeshViewerLocal(object):
     titlebar = property(fset=set_titlebar,
                         doc="Titlebar string.")
 
-    def save_snapshot(self, path, blocking=False, which_window=(0, 0), wait_time=1):
+    def save_snapshot(self, path, blocking=False, which_window=(0, 0)):
         """Saves a snapshot of the current window into the specified file
 
         :param path: filename to which the current window content will be saved
-        :param wait_time: waiting time to save snapshot. Increase it if the image is incomplete
         """
-        print('Saving snapshot to %s, please wait...' % path)
         self._send_pyobj('save_snapshot', path, blocking, which_window)
-        time.sleep(wait_time)
 
     def __del__(self):
         if self.keepalive:
@@ -914,19 +911,20 @@ class MeshViewerRemote(object):
         self.titlebar = titlebar
         self.activate(width, height)
 
-    def snapshot(self, path):
+    def snapshot(self, path, wait_time=0.1):
         """
         Takes a snapshot of the meshviewer window and saves it to disc.
 
         :param path: path to save the snapshot at.
+        :param wait_time: waiting time to save snapshot. Increase it if the image is incomplete
 
         .. note:: Requires the Pillow package to be installed.
-
         """
         from PIL import Image
         from OpenGL.GLU import GLubyte
 
         self.on_draw()
+        time.sleep(wait_time)
 
         x = 0
         y = 0
