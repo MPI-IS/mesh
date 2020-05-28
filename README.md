@@ -1,6 +1,6 @@
 [![Build Status](
     https://raw.githubusercontent.com/MPI-IS-BambooAgent/sw_badges/master/badges/plans/ps-body-mesh/tag.svg?sanitize=true)](
-        #-perceiving-systems-mesh-package)
+        https://atlas.is.localnet/bamboo/browse/PS-FMP/latest)
 
 Perceiving Systems Mesh Package
 ===============================
