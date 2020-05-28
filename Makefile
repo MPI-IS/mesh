@@ -2,9 +2,9 @@
 package_name := mesh_package
 
 all:
-	@echo "\033[0;36m----- [" ${package_name} "] Installing on the local virtual environment `which python`\033[0m"
+	@echo "\033[0;36m----- [" ${package_name} "] Installing with the interpreter `which python` (version `python --version | cut -d' ' -f2`)\033[0m"
 	@pip install --upgrade -r requirements.txt && pip list
-	@pip install --no-deps --install-option="--boost-location=$$BOOST_ROOT" --verbose --no-cache-dir .
+	@pip install --no-deps --install-option="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir .
 
 import_tests:
 	@echo "\033[0;33m----- [" ${package_name} "] Performing import tests\033[0m"
@@ -33,7 +33,7 @@ sdist:
 wheel:
 	@echo "\033[0;33m----- [" ${package_name} "] Creating the wheel distribution\033[0m"
 	@pip install wheel
-	@python setup.py --verbose build_ext --boost-location=$$BOOST_ROOT bdist_wheel
+	@python setup.py --verbose build_ext --boost-location=$$BOOST_INCLUDE_DIRS bdist_wheel
 
 # Build documentation
 documentation:

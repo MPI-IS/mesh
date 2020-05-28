@@ -229,7 +229,15 @@ additional_kwargs = {}
 if has_setup_tools:
     # setup tools required for the 'setup_requires' ...
     additional_kwargs['setup_requires'] = ['setuptools', 'numpy']
-    additional_kwargs['install_requires'] = ['numpy >= 1.8', 'scipy', 'pyopengl', 'pyyaml', 'pyzmq', 'opencv-python']
+    additional_kwargs['install_requires'] = [
+        'numpy >= 1.8',
+        'opencv-python',
+        'pillow',
+        'pyopengl',
+        'pyyaml',
+        'pyzmq',
+        'scipy',
+    ]
     additional_kwargs['zip_safe'] = not all_extensions
     additional_kwargs['test_suite'] = "tests"
     additional_kwargs['namespace_packages'] = [namespace_package]
@@ -266,5 +274,8 @@ setup(name='%s-mesh' % namespace_package,
       description='Mesh and MeshViewer utilities',
       license='See LICENSE.txt',
       cmdclass=cmdclass,
+      scripts=[
+          "bin/meshviewer"
+      ],
       ** additional_kwargs
       )
