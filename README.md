@@ -15,6 +15,7 @@ The ``Mesh`` processing libraries support several of our projects such as
 * [SMPL: A Skinned Multi-Person Linear Model](http://smpl.is.tue.mpg.de/)
 * [VOCA: Voice Operated Character Animation](https://github.com/TimoBolkart/voca)
 * [RingNet: 3D Face Shape and Expression Reconstruction from an Image](https://github.com/soubhiksanyal/RingNet)
+* [Expressive Body Capture: 3D Hands, Face, and Body from a Single Image](https://smpl-x.is.tue.mpg.de/)
 
 Requirements
 ------------
