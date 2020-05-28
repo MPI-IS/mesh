@@ -21,9 +21,9 @@ Contents:
 
 What is this package about?
 ===========================
+
 This package contains core functions for manipulating Meshes and visualizing them.
 It requires ``Python 3.5+`` and is supported on Linux and macOS operating systems.
-
 
 Getting started
 ===============
@@ -31,59 +31,32 @@ Getting started
 Installation
 ------------
 
-
-There are several places where you can download the latest release of the ``psbody-mesh`` package:
-
-* `Code Doc <https://code.is.localnet/series/3/8/>`_  , the internal documentation center of the MPI-IS
-* `GitLab <https://gitlab.tuebingen.mpg.de/ps-body/mesh>`_, the internal repository used for development
-* `GitHub <https://github.com/MPI-IS/mesh>`_ for the public release
-
-``Code Doc`` contains the wheel and source distributions, and the documentation of the **complete** package.
-
-``GitLab`` contains the source code of the **complete** package.
-
-``GitHub`` contains the source code of the public, **limited** package.
-
-
-First, create a dedicated Python virtual environment and activate it:
+You can download the latest release of the ``psbody-mesh`` package
+from the projects `GitHub repository <https://github.com/MPI-IS/mesh>`_.
+To install, first you should create a dedicated Python virtual
+environment and activate it:
 
 .. code::
 
     $ python3 -m venv --copies my_venv
     $ source my_venv/bin/activate
 
-The easiest way to install the ``psbody-mesh`` package is to use the wheel distribution:
+To compile the binary extensions you will need to install the `Boost
+<http://www.boost.org>`_ libraries.  You can compile your own local
+version or simply do:
 
 .. code::
 
-    $ pip install psbody_mesh_*.whl
+	$ sudo apt-get install libboost-dev
 
-.. warning::
-
-	Make sure to use to wheel corresponding to your OS and your Python version.
-
-You can also install the ``psbody-mesh`` package using the source distribution.
-For this, you first need to install the `Boost <http://www.boost.org>`_ libraries.
-You can compile your own local version or simply do on Linux
+and then compile and install the ``psbody-mesh`` package using the
+Makefile.  If you are using the system-wide ``Boost libraries``:
 
 .. code::
 
-    $ sudo apt-get install libboost-dev
+	$ make all
 
-or on macOS
-
-.. code::
-
-    $ brew install boost
-
-
-and then install the  ``psbody-mesh`` package:
-
-.. code::
-
-	$ pip install psbody_mesh_*.tar.gz
-
-As a last option, you can also compile and install the ``psbody-mesh`` package using the Makefile:
+or the libraries locally installed:
 
 .. code::
 
@@ -92,7 +65,7 @@ As a last option, you can also compile and install the ``psbody-mesh`` package u
 Testing
 -------
 
-To run the tests (only available in the **complete** package), simply do:
+To run the tests simply do:
 
 .. code::
 
