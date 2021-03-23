@@ -21,9 +21,9 @@ The ``Mesh`` processing libraries support several of our projects such as
 Requirements
 ------------
 
-You first need to install the `Boost <http://www.boost.org>`_
-libraries.  You can compile your own local version or simply do on
-Linux
+This package requires the `Boost <http://www.boost.org>` libraries in order to work.
+
+The recommended way to install them is to create a dedicated Anaconda virtual environment and install Boost from [an Anaconda package](https://anaconda.org/anaconda/boost). Otherwise, on Linux they can be compiled and installed globally with
 
 ```
 $ sudo apt-get install libboost-dev
@@ -35,27 +35,60 @@ or on macOS
 $ brew install boost
 ```
 
+
 Installation
 ------------
 
-First, create a dedicated Python virtual environment and activate it:
+*Note: This guide has been written for and tested on Linux Ubuntu 18.04; however, given its dependence on Anaconda, it should be (easily) adaptable to other operative systems. If you compiled Boost from source, skip step 2 and replace the ``BOOST_INCLUDE_DIRS=~/anaconda3/envs/my_venv/include/ make all`` line at step 5 with ``BOOST_INCLUDE_DIRS=/path/to/boost/include make all`` (where ``/path/to/boost`` is your Boost install folder).*
 
-```
-$ python3 -m venv --copies my_venv
-$ source my_venv/bin/activate
-```
+1. First, create a dedicated Python 3 virtual environment and activate it; note that  you can replace ``my_venv`` with another string (in all of the following commands) in order to give the virtual environment a custom name:
+    
+    ```
+    $ conda create --name my_venv python=3
+    $ conda activate my_venv
+    ```
 
-You should then compile and install the ``psbody-mesh`` package easily
-using the Makefile:
+2. Install the Boost libraries through an Anaconda package:
+    
+    ```
+    $ conda install -c anaconda boost
+    ```
 
-```
-$ BOOST_INCLUDE_DIRS=/path/to/boost/include make all
-```
+3. Check your PYTHONPATH in order to locate the ``site-packages`` folder for the current virtual environment:
+
+    ```
+    $ python3 -c 'import sys; print(sys.path); exit()'
+    ```
+   
+   The output of this command should look like this:
+   ```
+   $ ['', '/home/username/anaconda3/envs/my_venv/lib/python38.zip', '/home/username/anaconda3/envs/my_venv/lib/python3.8', '/home/username/anaconda3/envs/my_venv/lib/python3.8/lib-dynload', '/home/username/anaconda3/envs/my_venv/lib/python3.8/site-packages']
+    ```
+   
+    In this example, the path that you are looking for is ``~/anaconda3/envs/my_venv/lib/python3.8/site-packages`` (where ``python3.8`` could be any other Python 3 version, and ``~/anaconda3/envs/my_venv/`` is the folder containing the current virtual environment).
+    
+    *Note that unless otherwise specified, Anaconda saves all virtual environments in the ``/anaconda3/envs/`` folder, each in a subfolder named after the virtual environment it contains (e.g. ``/anaconda3/envs/my_venv/``). This folder can in turn be found in the default Anaconda install path, which as per the [official installation guide for Linux](https://docs.anaconda.com/anaconda/install/linux/#) should be ``~/``.*
+
+4. You should then clone the ``psbody-mesh`` package in the ``site-packages`` folder:
+    
+    ```
+    $ cd ~/anaconda3/envs/my_venv/lib/python3.8/site-packages
+    $ git clone https://github.com/MPI-IS/mesh
+    ```
+
+5. At this point rename the downloaded ``mesh`` folder to ``psbody``, move inside of it and compile the ``psbody-mesh`` package easily using the Makefile:
+    
+    ```
+    $ mv mesh psbody && cd psbody
+    $ BOOST_INCLUDE_DIRS=~/anaconda3/envs/my_venv/include/ make all
+    ```
+
+9. Done! Now you can add ``import psbody.mesh`` to any of your Python 3 scripts and execute them in the virtual environment thus created.
 
 Testing
 -------
 
-To run the tests, simply do:
+To run the tests, simply run the following command in the folder where ``psbody-mesh`` has been compiled (e.g. ``~/anaconda3/envs/my_venv/lib/python3.8/site-packages/psbody``):
 
 ```
 $ make tests
@@ -64,7 +97,7 @@ $ make tests
 Documentation
 -------------
 
-A detailed documentation can be compiled using the Makefile:
+A detailed documentation can be compiled using the Makefile, like above:
 
 ```
 $ make documentation
