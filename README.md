@@ -70,39 +70,25 @@ Installation with Conda
     $ conda install -c anaconda boost
     ```
 
-3. Check your PYTHONPATH in order to locate the ``site-packages`` folder for the current virtual environment:
-
-    ```
-    $ python3 -c 'import sys; print(sys.path); exit()'
-    ```
-   
-   The output of this command should look like this:
-   ```
-   $ ['', '/home/username/anaconda3/envs/my_venv/lib/python38.zip', '/home/username/anaconda3/envs/my_venv/lib/python3.8', '/home/username/anaconda3/envs/my_venv/lib/python3.8/lib-dynload', '/home/username/anaconda3/envs/my_venv/lib/python3.8/site-packages']
-    ```
-   
-    In this example, the path that you are looking for is ``~/anaconda3/envs/my_venv/lib/python3.8/site-packages`` (where ``python3.8`` could be any other Python 3 version, and ``~/anaconda3/envs/my_venv/`` is the folder containing the current virtual environment).
-    
-    *Note that unless otherwise specified, Anaconda saves all virtual environments in the ``/anaconda3/envs/`` folder, each in a subfolder named after the virtual environment it contains (e.g. ``/anaconda3/envs/my_venv/``). This folder can in turn be found in the default Anaconda install path, which as per the [official installation guide for Linux](https://docs.anaconda.com/anaconda/install/linux/#) should be ``~/``.*
-
-4. You should then clone the ``psbody-mesh`` package in the ``site-packages`` folder (in a subfolder named ``psbody``):
+3. Clone into the ``psbody-mesh`` repository:
     
     ```
-    $ git clone https://github.com/MPI-IS/mesh ~/anaconda3/envs/my_venv/lib/python3.8/site-packages/psbody
+    $ git clone https://github.com/MPI-IS/mesh
     ```
 
-5. At this point compile the ``psbody-mesh`` package easily using the Makefile:
+4. Install the ``psbody-mesh`` package easily with ``pip``:
     
     ```
-    $ BOOST_INCLUDE_DIRS=~/anaconda3/envs/my_venv/include/ make -C ~/anaconda3/envs/my_venv/lib/python3.8/site-packages/psbody all
+    $ pip install --upgrade -r mesh/requirements.txt
+    $ pip install --no-deps --install-option="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir mesh/.
     ```
 
-6. Done! Now you can add ``import psbody.mesh`` to any of your Python 3 scripts and execute them in the virtual environment thus created.
+5. Done! Now you can add ``import psbody.mesh`` to any of your Python 3 scripts and execute them in the virtual environment thus created.
 
 Testing
 -------
 
-To run the tests, simply do (if you installed ``psbody-mesh`` using Conda, run this command in the folder where it has been compiled, e.g. ``~/anaconda3/envs/my_venv/lib/python3.8/site-packages/psbody``):
+To run the tests, simply do:
 
 ```
 $ make tests
