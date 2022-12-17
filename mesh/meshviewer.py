@@ -95,14 +95,15 @@ def _run_self(args, stdin=None, stdout=None, stderr=None):
 
 
 def _test_for_opengl():
+    print("Checking OpenGL...")
     try:
-        # from OpenGL.GLUT import glutInit
         GLUT.glutInit()
     except Exception as e:
+        print("OpenGL not available")
         print(e, file=sys.stderr)
-        print('failure')
-    else:
-        print('success')
+        return False
+    print("Success!")
+    return True
 
 
 test_for_opengl_cached = None

@@ -91,7 +91,8 @@ from psbody.mesh.meshviewer import (
     MESH_VIEWER_DEFAULT_HEIGHT,
     ZMQ_HOST,
     MeshViewerLocal,
-    MeshViewerRemote)
+    MeshViewerRemote,
+    _test_for_opengl)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -374,6 +375,8 @@ def take_snapshot(client, args):
 
 
 if __name__ == "__main__":
-    args = parser_root.parse_args()
-    dispatch_command(args)
+    if _test_for_opengl():
+        args = parser_root.parse_args()
+        dispatch_command(args)
+
     sys.exit(0)
