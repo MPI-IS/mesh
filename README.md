@@ -21,9 +21,9 @@ The ``Mesh`` processing libraries support several of our projects such as
 Requirements
 ------------
 
-You first need to install the `Boost <http://www.boost.org>`_
-libraries.  You can compile your own local version or simply do on
-Linux
+This package requires the `Boost <http://www.boost.org>` libraries in order to work.
+
+You can either create a dedicated Conda virtual environment and install [Boost from Anaconda](https://anaconda.org/anaconda/boost) (see **Installation with Conda**), or compile your own local version and install it globally on Linux with
 
 ```
 $ sudo apt-get install libboost-dev
@@ -51,6 +51,39 @@ using the Makefile:
 ```
 $ BOOST_INCLUDE_DIRS=/path/to/boost/include make all
 ```
+
+Installation with Conda
+------------
+
+*Note: This guide has been written for and tested on Linux Ubuntu 18.04; however, given its dependence on Conda, it should be (easily) adaptable to other operative systems.*
+
+1. First, create a dedicated Python 3 virtual environment and activate it; note that  you can replace ``my_venv`` with another string (in all of the following commands) in order to give the virtual environment a custom name:
+    
+    ```
+    $ conda create --name my_venv python=3
+    $ conda activate my_venv
+    ```
+
+2. Install the Boost libraries through an Anaconda package:
+    
+    ```
+    $ conda install -c anaconda boost
+    ```
+
+3. Clone into the ``psbody-mesh`` repository:
+    
+    ```
+    $ git clone https://github.com/MPI-IS/mesh
+    ```
+
+4. Install the ``psbody-mesh`` package easily with ``pip``:
+    
+    ```
+    $ pip install --upgrade -r mesh/requirements.txt
+    $ pip install --no-deps --install-option="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir mesh/.
+    ```
+
+5. Done! Now you can add ``import psbody.mesh`` to any of your Python 3 scripts and execute them in the virtual environment thus created.
 
 Testing
 -------

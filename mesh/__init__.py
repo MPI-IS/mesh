@@ -7,7 +7,10 @@ import os
 from os.path import abspath, dirname, expanduser, join
 
 from .mesh import Mesh
-from .meshviewer import MeshViewer, MeshViewers
+try:
+    from .meshviewer import MeshViewer, MeshViewers
+except NotImplementedError: 
+    print("[WARNING] OpenGL not available. MeshViewer will not be imported.")
 
 texture_path = abspath(join(dirname(__file__), '..', 'data', 'template', 'texture_coordinates'))
 
