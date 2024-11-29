@@ -113,6 +113,11 @@ class build_ext(_build_ext):
         if self.boost_location is not None:
             ext.include_dirs += [self.boost_location]
 
+        ext.include_dirs += [
+            '/usr/local/include',
+            '/opt/homebrew/opt/boost/include'
+        ]
+
         # Remove empty paths
         filtered = []
         for in_dir in filter(None, ext.include_dirs):

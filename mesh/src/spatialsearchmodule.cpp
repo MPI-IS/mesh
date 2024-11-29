@@ -187,7 +187,7 @@ static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
         sample_points.push_back(K::Point_3(m_sample_points[ss][0], m_sample_points[ss][1], m_sample_points[ss][2]));
     }
 
-    npy_intp result1_dims[] = {1, S};
+    npy_intp result1_dims[] = {1, static_cast<npy_intp>(S)};
 
     PyObject *result1 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
     PyObject *result2 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
@@ -195,7 +195,7 @@ static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
     uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA(result1));
     uint32_t* closest_part=reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
 
-    npy_intp result3_dims[] = {S, 3};
+    npy_intp result3_dims[] = {static_cast<npy_intp>(S), 3};
     PyObject *result3 = PyArray_SimpleNew(2, result3_dims, NPY_DOUBLE);
     array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA(result3));
 
@@ -246,7 +246,7 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
         n_v.push_back(K::Vector_3(n_arr[ss][0], n_arr[ss][1], n_arr[ss][2]));
     }
 
-    npy_intp result1_dims[] = {S};
+    npy_intp result1_dims[] = {static_cast<npy_intp>(S)};
 
     PyObject *result1 = PyArray_SimpleNew(1, result1_dims, NPY_DOUBLE);
 
@@ -255,7 +255,7 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
     PyObject *result2 = PyArray_SimpleNew(1, result1_dims, NPY_UINT32);
     uint32_t* closest_triangles = reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
 
-    npy_intp result3_dims[] = {S, 3};
+    npy_intp result3_dims[] = {static_cast<npy_intp>(S), 3};
     PyObject *result3 = PyArray_SimpleNew(2, result3_dims, NPY_DOUBLE);
     array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA(result3));
 
@@ -393,7 +393,7 @@ static PyObject * spatialsearch_aabbtree_intersections_indices(PyObject *self, P
         }
 
         // GET RESULT BACK
-        npy_intp result_dims[] = {mesh_intersections.size()};
+        npy_intp result_dims[] = {static_cast<npy_intp>(mesh_intersections.size())};
         PyObject *result = PyArray_SimpleNew(1, result_dims, NPY_UINT32);
 
         uint32_t* mesh_intersections_arr = reinterpret_cast<uint32_t*>(PyArray_DATA(result));

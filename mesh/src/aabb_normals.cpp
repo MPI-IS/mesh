@@ -1,4 +1,3 @@
-
 // needed to avoid the link to debug "_d.lib" libraries
 #include "hijack_python_headers.hpp"
 #include <numpy/arrayobject.h>
@@ -66,17 +65,17 @@ aabbtree_normals_compute(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O!O!d", &PyArray_Type, &py_v, &PyArray_Type, &py_f, &eps))
         return NULL;
 
-    if (py_v->descr->type_num != NPY_DOUBLE || py_v->nd != 2) {
+    if (PyArray_TYPE((PyArrayObject *)py_v) != NPY_DOUBLE || PyArray_NDIM((PyArrayObject *)py_v) != 2) {
         PyErr_SetString(PyExc_ValueError, "Vertices must be of type double, and 2 dimensional");
         return NULL;
     }
-    if (py_f->descr->type_num != NPY_UINT32 || py_f->nd != 2) {
+    if (PyArray_TYPE((PyArrayObject *)py_f) != NPY_UINT32 || PyArray_NDIM((PyArrayObject *)py_f) != 2) {
         PyErr_SetString(PyExc_ValueError, "Faces must be of type uint32, and 2 dimensional");
         return NULL;
     }
 
-    npy_intp* v_dims = PyArray_DIMS(py_v);
-    npy_intp* f_dims = PyArray_DIMS(py_f);
+    npy_intp* v_dims = PyArray_DIMS((PyArrayObject *)py_v);
+    npy_intp* f_dims = PyArray_DIMS((PyArrayObject *)py_f);
 
     if (v_dims[1] != 3 || f_dims[1] != 3) {
         PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
@@ -129,8 +128,8 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
 
     size_t S=v_dims[0];
 
-    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_v));
-    array<double, 3>* m_sample_n=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_n));
+    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject *)py_v));
+    array<double, 3>* m_sample_n=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject *)py_n));
 
     #ifdef _OPENMP
     omp_set_num_threads(8);
@@ -147,14 +146,14 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
                                                       m_sample_n[ss][2])));
     }
 
-    npy_intp result1_dims[] = {1, S};
+    npy_intp result1_dims[] = {1, static_cast<npy_intp>(S)};
 
     PyObject *result1 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
 
     uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA(result1));
     array<double,3>* closest_point=NULL;
     //if(1) { //nlhs > 1) {
-        npy_intp result2_dims[] = {S, 3};
+        npy_intp result2_dims[] = {static_cast<npy_intp>(S), 3};
         PyObject *result2 = PyArray_SimpleNew(2, result2_dims, NPY_DOUBLE);
         closest_point=reinterpret_cast<array<double,3>*>(PyArray_DATA(result2));
     //}

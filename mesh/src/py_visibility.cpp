@@ -192,7 +192,7 @@ visibility_compute(PyObject *self, PyObject *args, PyObject *keywds)
 
         size_t C = cam_dims[0];
 
-        npy_intp result_dims[] = {C,search->points.size()};
+        npy_intp result_dims[] = {static_cast<npy_intp>(C), static_cast<npy_intp>(search->points.size())};
         PyObject *py_bin_visibility = PyArray_SimpleNew(2, result_dims, NPY_UINT32);
         PyObject *py_normal_dot_cam = PyArray_SimpleNew(2, result_dims, NPY_DOUBLE);
         uint32_t* visibility = reinterpret_cast<uint32_t*>(PyArray_DATA(py_bin_visibility));
