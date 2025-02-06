@@ -4,7 +4,7 @@ package_name := mesh_package
 all:
 	@echo "\033[0;36m----- [" ${package_name} "] Installing with the interpreter `which python` (version `python --version | cut -d' ' -f2`)\033[0m"
 	@pip install --upgrade -r requirements.txt && pip list
-	@pip install --no-deps --install-option="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir .
+	@BOOST_ROOT=${BOOST_INCLUDE_DIRS} pip install --no-deps --verbose --no-cache-dir .
 
 import_tests:
 	@echo "\033[0;33m----- [" ${package_name} "] Performing import tests\033[0m"
@@ -24,18 +24,15 @@ unit_tests:
 
 tests: import_tests unit_tests
 
-# Creating source distribution
 sdist:
 	@echo "\033[0;33m----- [" ${package_name} "] Creating the source distribution\033[0m"
 	@python setup.py sdist
 
-# Creating wheel distribution
 wheel:
 	@echo "\033[0;33m----- [" ${package_name} "] Creating the wheel distribution\033[0m"
 	@pip install wheel
-	@python setup.py --verbose build_ext --boost-location=$$BOOST_INCLUDE_DIRS bdist_wheel
+	@BOOST_ROOT=${BOOST_INCLUDE_DIRS} python setup.py --verbose build_ext bdist_wheel
 
-# Build documentation
 documentation:
 	@echo "\033[0;33m----- [" ${package_name} "] Building Sphinx documentation\033[0m"
 	@pip install -U sphinx sphinx_bootstrap_theme
