@@ -4,7 +4,7 @@ package_name := mesh_package
 all:
 	@echo "\033[0;36m----- [" ${package_name} "] Installing with the interpreter `which python` (version `python --version | cut -d' ' -f2`)\033[0m"
 	@pip install --upgrade -r requirements.txt && pip list
-	@pip install --no-deps --install-option="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir .
+	@pip install --no-deps --config-settings="--boost-location=$$BOOST_INCLUDE_DIRS" --verbose --no-cache-dir .
 
 import_tests:
 	@echo "\033[0;33m----- [" ${package_name} "] Performing import tests\033[0m"

@@ -75,16 +75,16 @@ aabbtree_normals_compute(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    npy_intp* v_dims = PyArray_DIMS(py_v);
-    npy_intp* f_dims = PyArray_DIMS(py_f);
+    npy_intp* v_dims = PyArray_DIMS((PyArrayObject*)py_v);
+    npy_intp* f_dims = PyArray_DIMS((PyArrayObject*)py_f);
 
     if (v_dims[1] != 3 || f_dims[1] != 3) {
         PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
         return NULL;
     }
 
-    double *pV = (double*)PyArray_DATA(py_v);
-    uint32_t *pF = (uint32_t*)PyArray_DATA(py_f);
+    double *pV = (double*)PyArray_DATA((PyArrayObject*)py_v);
+    uint32_t *pF = (uint32_t*)PyArray_DATA((PyArrayObject*)py_f);
 
     size_t P = v_dims[0];
     size_t T = f_dims[0];
@@ -115,8 +115,8 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
 
     TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
-    npy_intp* v_dims = PyArray_DIMS(py_v);
-    npy_intp* n_dims = PyArray_DIMS(py_n);
+    npy_intp* v_dims = PyArray_DIMS((PyArrayObject*)py_v);
+    npy_intp* n_dims = PyArray_DIMS((PyArrayObject*)py_n);
 
     if (v_dims[1] != 3) {
         PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
@@ -129,8 +129,8 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
 
     size_t S=v_dims[0];
 
-    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_v));
-    array<double, 3>* m_sample_n=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_n));
+    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)py_v));
+    array<double, 3>* m_sample_n=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)py_n));
 
     #ifdef _OPENMP
     omp_set_num_threads(8);
@@ -151,12 +151,12 @@ aabbtree_normals_nearest(PyObject *self, PyObject *args)
 
     PyObject *result1 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
 
-    uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA(result1));
+    uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)result1));
     array<double,3>* closest_point=NULL;
     //if(1) { //nlhs > 1) {
         npy_intp result2_dims[] = {S, 3};
         PyObject *result2 = PyArray_SimpleNew(2, result2_dims, NPY_DOUBLE);
-        closest_point=reinterpret_cast<array<double,3>*>(PyArray_DATA(result2));
+        closest_point=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)result2));
     //}
 
     #pragma omp parallel for

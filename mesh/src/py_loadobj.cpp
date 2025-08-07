@@ -209,17 +209,17 @@ loadobj(PyObject *self, PyObject *args, PyObject *keywds)
         */
         // The following copy would be faster in C++11 with move semantics
         PyObject *py_v = PyArray_SimpleNew(2, v_dims, NPY_DOUBLE);
-        std::copy(v.begin(), v.end(), reinterpret_cast<double*>(PyArray_DATA(py_v)));
+        std::copy(v.begin(), v.end(), reinterpret_cast<double*>(PyArray_DATA((PyArrayObject*)py_v)));
         PyObject *py_vt = PyArray_SimpleNew(2, vt_dims, NPY_DOUBLE);
-        std::copy(vt.begin(), vt.end(), reinterpret_cast<double*>(PyArray_DATA(py_vt)));
+        std::copy(vt.begin(), vt.end(), reinterpret_cast<double*>(PyArray_DATA((PyArrayObject*)py_vt)));
         PyObject *py_vn = PyArray_SimpleNew(2, vn_dims, NPY_DOUBLE);
-        std::copy(vn.begin(), vn.end(), reinterpret_cast<double*>(PyArray_DATA(py_vn)));
+        std::copy(vn.begin(), vn.end(), reinterpret_cast<double*>(PyArray_DATA((PyArrayObject*)py_vn)));
         PyObject *py_f = PyArray_SimpleNew(2, f_dims, NPY_UINT32);
-        std::copy(f.begin(), f.end(), reinterpret_cast<uint32_t*>(PyArray_DATA(py_f)));
+        std::copy(f.begin(), f.end(), reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)py_f)));
         PyObject *py_ft = PyArray_SimpleNew(2, ft_dims, NPY_UINT32);
-        std::copy(ft.begin(), ft.end(), reinterpret_cast<uint32_t*>(PyArray_DATA(py_ft)));
+        std::copy(ft.begin(), ft.end(), reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)py_ft)));
         PyObject *py_fn = PyArray_SimpleNew(2, fn_dims, NPY_UINT32);
-        std::copy(fn.begin(), fn.end(), reinterpret_cast<uint32_t*>(PyArray_DATA(py_fn)));
+        std::copy(fn.begin(), fn.end(), reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)py_fn)));
 
         PyObject *py_landm = PyDict_New();
         for (std::map<std::string, uint32_t>::iterator it=landm.begin(); it!=landm.end(); ++it)
@@ -230,7 +230,7 @@ loadobj(PyObject *self, PyObject *args, PyObject *keywds)
             unsigned n = it->second.size();
             npy_intp dims[] = {n};
             PyObject *temp = PyArray_SimpleNew(1, dims, NPY_UINT32);
-            std::copy(it->second.begin(), it->second.end(), reinterpret_cast<uint32_t*>(PyArray_DATA(temp)));
+            std::copy(it->second.begin(), it->second.end(), reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)temp)));
             PyDict_SetItemString(py_segm, it->first.c_str(), Py_BuildValue("N", temp));
         }
 
