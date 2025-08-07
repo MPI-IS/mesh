@@ -85,16 +85,16 @@ spatialsearch_aabbtree_compute(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    npy_intp* v_dims = PyArray_DIMS(py_v);
-    npy_intp* f_dims = PyArray_DIMS(py_f);
+    npy_intp* v_dims = PyArray_DIMS((PyArrayObject*)py_v);
+    npy_intp* f_dims = PyArray_DIMS((PyArrayObject*)py_f);
 
     if (v_dims[1] != 3 || f_dims[1] != 3) {
         PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
         return NULL;
     }
 
-    double *pV = (double*)PyArray_DATA(py_v);
-    uint32_t *pF = (uint32_t*)PyArray_DATA(py_f);
+    double *pV = (double*)PyArray_DATA((PyArrayObject*)py_v);
+    uint32_t *pF = (uint32_t*)PyArray_DATA((PyArrayObject*)py_f);
 
     size_t P = v_dims[0];
     size_t T = f_dims[0];
@@ -166,7 +166,7 @@ static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
         return NULL;
     TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
-    npy_intp* v_dims = PyArray_DIMS(py_v);
+    npy_intp* v_dims = PyArray_DIMS((PyArrayObject*)py_v);
 
     if (v_dims[1] != 3) {
         PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
@@ -175,7 +175,7 @@ static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
 
     size_t S=v_dims[0];
 
-    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA(py_v));
+    array<double, 3>* m_sample_points=reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)py_v));
 
     #ifdef _OPENMP
     omp_set_num_threads(8);
@@ -192,12 +192,12 @@ static PyObject* spatialsearch_aabbtree_nearest(PyObject *self, PyObject *args)
     PyObject *result1 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
     PyObject *result2 = PyArray_SimpleNew(2, result1_dims, NPY_UINT32);
 
-    uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA(result1));
-    uint32_t* closest_part=reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
+    uint32_t* closest_triangles=reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)result1));
+    uint32_t* closest_part=reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)result2));
 
     npy_intp result3_dims[] = {S, 3};
     PyObject *result3 = PyArray_SimpleNew(2, result3_dims, NPY_DOUBLE);
-    array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA(result3));
+    array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)result3));
 
 
 #ifdef HAVE_TBB
@@ -220,8 +220,8 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
         return NULL;
     TreeAndTri *search = (TreeAndTri *) PyCapsule_GetPointer(py_tree, NULL);
 
-    npy_intp* p_dims = PyArray_DIMS(py_p);
-    npy_intp* n_dims = PyArray_DIMS(py_p);
+    npy_intp* p_dims = PyArray_DIMS((PyArrayObject*)py_p);
+    npy_intp* n_dims = PyArray_DIMS((PyArrayObject*)py_p);
 
     if (p_dims[1] != 3 || n_dims[1] != 3 || p_dims[0] != n_dims[0]) {
         PyErr_SetString(PyExc_ValueError, "Points and normals must be Nx3");
@@ -230,8 +230,8 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
 
     size_t S=p_dims[0];
 
-    array<double, 3>* p_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA(py_p));
-    array<double, 3>* n_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA(py_n));
+    array<double, 3>* p_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)py_p));
+    array<double, 3>* n_arr = reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)py_n));
 
     #ifdef _OPENMP
     omp_set_num_threads(8);
@@ -250,14 +250,14 @@ static PyObject* spatialsearch_aabbtree_nearest_alongnormal(PyObject *self, PyOb
 
     PyObject *result1 = PyArray_SimpleNew(1, result1_dims, NPY_DOUBLE);
 
-    double* distance = reinterpret_cast<double*>(PyArray_DATA(result1));
+    double* distance = reinterpret_cast<double*>(PyArray_DATA((PyArrayObject*)result1));
 
     PyObject *result2 = PyArray_SimpleNew(1, result1_dims, NPY_UINT32);
-    uint32_t* closest_triangles = reinterpret_cast<uint32_t*>(PyArray_DATA(result2));
+    uint32_t* closest_triangles = reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)result2));
 
     npy_intp result3_dims[] = {S, 3};
     PyObject *result3 = PyArray_SimpleNew(2, result3_dims, NPY_DOUBLE);
-    array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA(result3));
+    array<double,3>* closest_point = reinterpret_cast<array<double,3>*>(PyArray_DATA((PyArrayObject*)result3));
 
 #ifdef HAVE_OPENMP
     #pragma omp parallel for
@@ -344,16 +344,16 @@ static PyObject * spatialsearch_aabbtree_intersections_indices(PyObject *self, P
         }
 
         // QUERY MESH STRUCTURE
-        npy_intp* qv_dims = PyArray_DIMS(py_qv);
-        npy_intp* qf_dims = PyArray_DIMS(py_qf);
+        npy_intp* qv_dims = PyArray_DIMS((PyArrayObject*)py_qv);
+        npy_intp* qf_dims = PyArray_DIMS((PyArrayObject*)py_qf);
 
         if (qv_dims[1] != 3 || qf_dims[1] != 3) {
             PyErr_SetString(PyExc_ValueError, "Input must be Nx3");
             return NULL;
         }
 
-        double *pQV = (double*)PyArray_DATA(py_qv);
-        uint32_t *pQF = (uint32_t*)PyArray_DATA(py_qf);
+        double *pQV = (double*)PyArray_DATA((PyArrayObject*)py_qv);
+        uint32_t *pQF = (uint32_t*)PyArray_DATA((PyArrayObject*)py_qf);
 
         size_t q_n_verts = qv_dims[0];
         size_t q_n_faces = qf_dims[0];
@@ -396,7 +396,7 @@ static PyObject * spatialsearch_aabbtree_intersections_indices(PyObject *self, P
         npy_intp result_dims[] = {mesh_intersections.size()};
         PyObject *result = PyArray_SimpleNew(1, result_dims, NPY_UINT32);
 
-        uint32_t* mesh_intersections_arr = reinterpret_cast<uint32_t*>(PyArray_DATA(result));
+        uint32_t* mesh_intersections_arr = reinterpret_cast<uint32_t*>(PyArray_DATA((PyArrayObject*)result));
         std::copy(mesh_intersections.begin(), mesh_intersections.end(),mesh_intersections_arr);
 
         return Py_BuildValue("N",result);
